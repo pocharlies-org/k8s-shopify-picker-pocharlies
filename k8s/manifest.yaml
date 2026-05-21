@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: skirmshop
+  labels:
+    cnpg-backup: "true"   # triggers ClusterExternalSecret minio-backup-creds
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skirmshop-picker
+  namespace: skirmshop
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: skirmshop-picker } }
+  template:
+    metadata: { labels: { app: skirmshop-picker } }
+    spec:
+      enableServiceLinks: false
+      nodeSelector: { topology: lan, kubernetes.io/arch: amd64 }
+      containers:
+        - name: picker
+          image: harbor.e-dani.com/homelab/skirmshop-picker:latest
+          ports: [{ name: http, containerPort: 3480 }]
+          env:
+            - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@shared-postgres-rw.skirmshop.svc.cluster.local:5432/skirmshop" }
+          envFrom: [{ secretRef: { name: labels-secrets } }]
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits:   { memory: 512Mi }
+          readinessProbe:
+            httpGet: { path: /health, port: 3480 }
+            initialDelaySeconds: 15
+---
+---
+apiVersion: v1
+kind: Service
+metadata: { name: skirmshop-picker, namespace: skirmshop }
+spec:
+  selector: { app: skirmshop-picker }
+  ports: [{ name: http, port: 80, targetPort: 3480 }]
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BUNDLES-APP + SII-APP (Shopify public apps)
+# ══════════════════════════════════════════════════════════════════════════════
