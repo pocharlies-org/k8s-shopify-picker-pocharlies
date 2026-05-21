@@ -32,6 +32,38 @@ metadata: { name: skirmshop-picker, namespace: skirmshop }
 spec:
   selector: { app: skirmshop-picker }
   ports: [{ name: http, port: 80, targetPort: 3480 }]
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-picker
+  namespace: skirmshop
+spec:
+  stripPrefix:
+    prefixes:
+      - /picker
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: skirmshop-picker-public
+  namespace: skirmshop
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: skirmshop.e-dani.com
+    external-dns.alpha.kubernetes.io/target: "57.129.17.172"
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+spec:
+  entryPoints: [websecure]
+  ingressClassName: traefik-edge
+  routes:
+    - match: Host(`skirmshop.e-dani.com`) && PathPrefix(`/picker`)
+      kind: Rule
+      middlewares:
+        - name: strip-picker
+      services:
+        - name: skirmshop-picker
+          port: 80
+  tls: {}
 
 # ══════════════════════════════════════════════════════════════════════════════
 # BUNDLES-APP + SII-APP (Shopify public apps)
