@@ -72,6 +72,7 @@ spec:
   routes:
     - match: Host(`skirmshop.e-dani.com`) && Path(`/picker`)
       kind: Rule
+      priority: 300
       middlewares:
         - name: redirect-picker-root
       services:
@@ -79,6 +80,7 @@ spec:
           port: 80
     - match: Host(`skirmshop.e-dani.com`) && PathPrefix(`/picker`)
       kind: Rule
+      priority: 100
       middlewares:
         - name: strip-picker
       services:
