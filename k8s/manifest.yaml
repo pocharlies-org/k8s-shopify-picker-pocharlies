@@ -39,6 +39,17 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
+  name: redirect-picker-root
+  namespace: skirmshop
+spec:
+  redirectRegex:
+    regex: ^https?://skirmshop\.e-dani\.com(:[0-9]+)?/picker$
+    replacement: https://skirmshop.e-dani.com/picker/shopify/purchase-orders
+    permanent: false
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
   name: strip-picker
   namespace: skirmshop
 spec:
@@ -59,6 +70,13 @@ spec:
   entryPoints: [websecure]
   ingressClassName: traefik-edge
   routes:
+    - match: Host(`skirmshop.e-dani.com`) && Path(`/picker`)
+      kind: Rule
+      middlewares:
+        - name: redirect-picker-root
+      services:
+        - name: skirmshop-picker
+          port: 80
     - match: Host(`skirmshop.e-dani.com`) && PathPrefix(`/picker`)
       kind: Rule
       middlewares:
