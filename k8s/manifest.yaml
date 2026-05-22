@@ -10,7 +10,9 @@ spec:
     metadata: { labels: { app: skirmshop-picker } }
     spec:
       enableServiceLinks: false
-      nodeSelector: { topology: lan, kubernetes.io/arch: amd64 }
+      nodeSelector: { role: edge, kubernetes.io/arch: amd64 }
+      tolerations:
+        - { key: role, operator: Equal, value: edge, effect: NoSchedule }
       containers:
         - name: picker
           image: harbor.e-dani.com/homelab/skirmshop-picker:latest
