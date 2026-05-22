@@ -66,7 +66,8 @@ spec:
       services:
         - name: skirmshop-picker
           port: 80
-  tls: {}
+  tls:
+    store: { name: default, namespace: traefik-edge }
 
 # ══════════════════════════════════════════════════════════════════════════════
 # BUNDLES-APP + SII-APP (Shopify public apps)
