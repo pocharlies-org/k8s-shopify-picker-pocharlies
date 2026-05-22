@@ -16,6 +16,7 @@ spec:
       containers:
         - name: picker
           image: harbor.e-dani.com/homelab/skirmshop-picker:latest
+          imagePullPolicy: IfNotPresent
           ports: [{ name: http, containerPort: 3480 }]
           env:
             - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
