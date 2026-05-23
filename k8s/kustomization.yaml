@@ -6,7 +6,7 @@ namespace: skirmshop
 # Internal admin tool (not Shopify-embedded): bespoke routing + Authelia SSO.
 # Uses explicit names (no namePrefix) because routing is hand-written.
 resources:
-  - git@github.com:pocharlies/k8s-shopify-framework-pocharlies.git//base?ref=deploy/prod
+  - https://github.com/pocharlies/k8s-shopify-framework-pocharlies.git//base?ref=deploy/prod
   - routing.yaml
   - cronjobs.yaml
 
@@ -21,8 +21,21 @@ images:
     newTag: latest
 
 patches:
-  - path: deployment-patch.yaml
-    target: { kind: Deployment, name: app }
+  - target: { kind: Deployment, name: app }
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: app
+      spec:
+        template:
+          spec:
+            containers:
+              - name: app
+                env:
+                  - { name: PORT, value: "3480" }
+                envFrom:
+                  - secretRef: { name: picker-secrets }
   - target: { group: apps, version: v1, kind: Deployment, name: app }
     patch: |-
       - op: replace
