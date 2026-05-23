@@ -1,0 +1,112 @@
+# Scheduled jobs migrated off sauvage's `ubuntu` crontab (cron-wrapper.sh picklist_close /
+# purchase_recommend). Reuse the picker image (kustomize images: rewrites shopify-app) +
+# picker-secrets. This repo uses explicit names (no namePrefix), so names carry a picker- prefix.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: picker-picklist-close
+  labels:
+    app.kubernetes.io/component: cron
+    app.kubernetes.io/instance: picker
+spec:
+  schedule: "0 * * * *"          # was: picklist_close — hourly
+  timeZone: Europe/Madrid
+  # MIGRATION: runtime-verified OK (image has python3 + the scripts). Staged suspended;
+  # unsuspend at cutover AFTER removing the matching sauvage host cron line (avoid double-run).
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: harbor-pull
+          nodeSelector:
+            role: edge
+            kubernetes.io/arch: amd64
+          tolerations:
+            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
+          containers:
+            - name: picklist-close
+              image: shopify-app          # rewritten by overlay images: → skirmshop-picker
+              workingDir: /app
+              command: ["python3", "scripts/close-picklists.py"]
+              envFrom:
+                - secretRef: { name: picker-secrets }
+              env:
+                - { name: NODE_ENV, value: "production" }
+                - name: DB_USER
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
+                - name: DB_PASSWORD
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+              resources:
+                requests: { cpu: 50m, memory: 128Mi }
+                limits: { memory: 512Mi }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: picker-purchase-recommend
+  labels:
+    app.kubernetes.io/component: cron
+    app.kubernetes.io/instance: picker
+spec:
+  schedule: "0 6 * * 1"          # was: purchase_recommend — Monday 06:00
+  timeZone: Europe/Madrid
+  # MIGRATION: runtime-verified OK (image has python3 + the scripts). Staged suspended;
+  # unsuspend at cutover AFTER removing the matching sauvage host cron line (avoid double-run).
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: harbor-pull
+          nodeSelector:
+            role: edge
+            kubernetes.io/arch: amd64
+          tolerations:
+            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
+          containers:
+            - name: purchase-recommend
+              image: shopify-app
+              workingDir: /app
+              # 3-step pipeline (recommend → compare --apply → send-report); writes to /tmp
+              # in-container instead of the host's /var/log/skirmshop-picker.
+              command:
+                - sh
+                - -c
+                - |
+                  set -euo pipefail
+                  out=/tmp/purchase-recommendations-$(date +%Y%m%d).json
+                  python3 scripts/recommend-purchases.py --dry-run --output json > "$out"
+                  python3 scripts/compare-recommendations.py --recommendations "$out" --apply
+                  python3 scripts/send-report.py
+              envFrom:
+                - secretRef: { name: picker-secrets }
+              env:
+                - { name: NODE_ENV, value: "production" }
+                - name: DB_USER
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
+                - name: DB_PASSWORD
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+              resources:
+                requests: { cpu: 100m, memory: 192Mi }
+                limits: { memory: 768Mi }
