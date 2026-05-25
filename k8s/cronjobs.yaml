@@ -92,6 +92,8 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
+                - { name: AMQP_HOST, value: "shared-rabbitmq.databases.svc.cluster.local" }
+                - { name: AMQP_PORT, value: "5672" }
                 - { name: PURCHASE_RECOMMEND_TIMEOUT_SECONDS, value: "3600" }
                 - { name: PURCHASE_COMPARE_TIMEOUT_SECONDS, value: "2400" }
                 - { name: PURCHASE_REPORT_TIMEOUT_SECONDS, value: "600" }
@@ -100,7 +102,16 @@ spec:
                 - name: DB_PASSWORD
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
                 - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+              volumeMounts:
+                - name: synapse-credentials
+                  mountPath: /etc/synapse/credentials
+                  readOnly: true
               terminationMessagePolicy: FallbackToLogsOnError
               resources:
                 requests: { cpu: 100m, memory: 192Mi }
                 limits: { memory: 768Mi }
+          volumes:
+            - name: synapse-credentials
+              hostPath:
+                path: /etc/synapse/credentials
+                type: Directory
