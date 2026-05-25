@@ -71,8 +71,8 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 1
-      activeDeadlineSeconds: 3600
-      ttlSecondsAfterFinished: 86400
+      activeDeadlineSeconds: 7200
+      ttlSecondsAfterFinished: 604800
       template:
         spec:
           restartPolicy: Never
@@ -87,26 +87,20 @@ spec:
             - name: purchase-recommend
               image: shopify-app
               workingDir: /app
-              # 3-step pipeline (recommend → compare --apply → send-report); writes to /tmp
-              # in-container instead of the host's /var/log/skirmshop-picker.
-              command:
-                - sh
-                - -c
-                - |
-                  set -euo pipefail
-                  out=/tmp/purchase-recommendations-$(date +%Y%m%d).json
-                  python3 scripts/recommend-purchases.py --dry-run --output json > "$out"
-                  python3 scripts/compare-recommendations.py --recommendations "$out" --apply
-                  python3 scripts/send-report.py
+              command: ["scripts/run-purchase-cron.sh"]
               envFrom:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
+                - { name: PURCHASE_RECOMMEND_TIMEOUT_SECONDS, value: "3600" }
+                - { name: PURCHASE_COMPARE_TIMEOUT_SECONDS, value: "2400" }
+                - { name: PURCHASE_REPORT_TIMEOUT_SECONDS, value: "600" }
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
                 - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+              terminationMessagePolicy: FallbackToLogsOnError
               resources:
                 requests: { cpu: 100m, memory: 192Mi }
                 limits: { memory: 768Mi }
