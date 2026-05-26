@@ -92,7 +92,10 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
-                - { name: AMQP_HOST, value: "shared-rabbitmq.databases.svc.cluster.local" }
+                # Synapse workflow fabric (engine + adapters incl. messaging/Hermes) still
+                # lives on sauvage user-systemd consuming from sauvage's docker rabbitmq.
+                # synapse-rmq is the in-cluster bridge Service that resolves to sauvage:5672.
+                - { name: AMQP_HOST, value: "synapse-rmq.databases.svc.cluster.local" }
                 - { name: AMQP_PORT, value: "5672" }
                 - { name: PURCHASE_RECOMMEND_TIMEOUT_SECONDS, value: "3600" }
                 - { name: PURCHASE_COMPARE_TIMEOUT_SECONDS, value: "2400" }
