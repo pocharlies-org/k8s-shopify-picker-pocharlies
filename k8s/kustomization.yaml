@@ -34,6 +34,11 @@ patches:
               - name: app
                 env:
                   - { name: PORT, value: "3480" }
+                  # Override the framework base's generic SCOPES (read_products,write_products):
+                  # as a direct env var it shadows the real scopes. Must match this app's
+                  # shopify.app.toml access_scopes and k8s/expected-scopes.txt
+                  # (guarded by scripts/verify-scopes.sh).
+                  - { name: SCOPES, value: "read_products,read_inventory,read_orders,read_reports,read_customers,read_customer_address,read_customer_email,read_customer_name,read_customer_phone" }
                 envFrom:
                   - secretRef: { name: picker-secrets }
   - target: { group: apps, version: v1, kind: Deployment, name: app }

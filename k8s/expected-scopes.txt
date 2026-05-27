@@ -1,0 +1,1 @@
+read_products,read_inventory,read_orders,read_reports,read_customers,read_customer_address,read_customer_email,read_customer_name,read_customer_phone
