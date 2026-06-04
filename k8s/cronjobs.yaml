@@ -136,7 +136,7 @@ metadata:
 spec:
   schedule: "0 4 * * *"          # daily 04:00 — signal refresh only
   timeZone: Europe/Madrid
-  suspend: true   # PAUSED: live-server async-review hits sqlite 'database is locked'; pivot to Job-pod-direct recommend + Postgres persistence
+  suspend: false   # Job-pod-direct recommend (no serving-pod sqlite lock) → POST signals to rag-app Postgres
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 200
   successfulJobsHistoryLimit: 3
@@ -160,11 +160,16 @@ spec:
             - name: purchase-signals
               image: shopify-app          # rewritten by overlay images: → skirmshop-picker
               workingDir: /app
-              command: ["python3", "scripts/purchase-api-pipeline.py", "--base-url", "http://skirmshop-picker:80", "--source", "daily-signals"]
+              # Run the analyze DIRECTLY in this dedicated Job pod (reliable — no
+              # serving-pod sqlite lock) and POST the per-product signals to the
+              # catalog ficha (durable Postgres). NO POs (no --create-po).
+              command: ["python3", "scripts/recommend-purchases.py", "--post-signals-url", "http://rag-app/api/manufacturers/signals", "--source", "daily-signals"]
               envFrom:
-                - secretRef: { name: picker-secrets }   # PURCHASE_API_TOKEN
+                - secretRef: { name: picker-secrets }   # PICQER_API_KEY + GA4 creds
               env:
                 - { name: NODE_ENV, value: "production" }
+                - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
+                  valueFrom: { secretKeyRef: { name: rag-secrets, key: CATALOG_SYNC_TOKEN } }
               terminationMessagePolicy: FallbackToLogsOnError
               resources:
                 requests: { cpu: 50m, memory: 128Mi }
