@@ -136,7 +136,7 @@ metadata:
 spec:
   schedule: "0 4 * * *"          # daily 04:00 — signal refresh only
   timeZone: Europe/Madrid
-  suspend: false
+  suspend: true   # PAUSED: live-server async-review hits sqlite 'database is locked'; pivot to Job-pod-direct recommend + Postgres persistence
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 200
   successfulJobsHistoryLimit: 3
