@@ -42,6 +42,14 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
+                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
+                - { name: S3_BUCKET, value: "skirmshop-drive" }
+                - { name: S3_REGION, value: "us-east-1" }
+                - { name: S3_PREFIX, value: "price-lists" }
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
@@ -92,6 +100,14 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
+                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
+                - { name: S3_BUCKET, value: "skirmshop-drive" }
+                - { name: S3_REGION, value: "us-east-1" }
+                - { name: S3_PREFIX, value: "price-lists" }
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
                 # Synapse workflow fabric (engine + adapters incl. messaging/Hermes) still
                 # lives on sauvage user-systemd consuming from sauvage's docker rabbitmq.
                 # synapse-rmq is the in-cluster bridge Service that resolves to sauvage:5672.
@@ -168,6 +184,14 @@ spec:
                 - secretRef: { name: picker-secrets }   # PICQER_API_KEY + GA4 creds
               env:
                 - { name: NODE_ENV, value: "production" }
+                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
+                - { name: S3_BUCKET, value: "skirmshop-drive" }
+                - { name: S3_REGION, value: "us-east-1" }
+                - { name: S3_PREFIX, value: "price-lists" }
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
                 - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
                   valueFrom: { secretKeyRef: { name: rag-secrets, key: CATALOG_SYNC_TOKEN } }
               terminationMessagePolicy: FallbackToLogsOnError
