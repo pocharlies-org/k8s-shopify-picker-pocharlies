@@ -32,6 +32,16 @@ spec:
   entryPoints: [websecure]
   ingressClassName: traefik-edge
   routes:
+    # Shopify webhook deliveries can't follow the Keycloak redirect; the
+    # handler authenticates them itself via X-Shopify-Hmac-Sha256
+    # (SHOPIFY_API_SECRET), so this path must bypass sso-chain.
+    - match: Host(`skirmshop.e-dani.com`) && PathPrefix(`/picker/webhooks/`)
+      kind: Rule
+      priority: 400
+      middlewares:
+        - { name: picker-strip }
+      services:
+        - { name: skirmshop-picker, port: 80 }
     - match: Host(`skirmshop.e-dani.com`) && Path(`/picker`)
       kind: Rule
       priority: 300
