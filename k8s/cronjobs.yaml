@@ -42,6 +42,14 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
+                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
+                - { name: S3_BUCKET, value: "skirmshop-drive" }
+                - { name: S3_REGION, value: "us-east-1" }
+                - { name: S3_PREFIX, value: "price-lists" }
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
@@ -92,6 +100,14 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
+                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
+                - { name: S3_BUCKET, value: "skirmshop-drive" }
+                - { name: S3_REGION, value: "us-east-1" }
+                - { name: S3_PREFIX, value: "price-lists" }
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
                 # Synapse workflow fabric (engine + adapters incl. messaging/Hermes) still
                 # lives on sauvage user-systemd consuming from sauvage's docker rabbitmq.
                 # synapse-rmq is the in-cluster bridge Service that resolves to sauvage:5672.
@@ -118,3 +134,67 @@ spec:
               hostPath:
                 path: /etc/synapse/credentials
                 type: Directory
+---
+# F4 signal-refresh: daily analyze-only run. A thin HTTP client that POSTs
+# /api/purchase/review to the LIVE picker Service so the long-lived server pod
+# persists a fresh purchase_run with product_details (per-product signals:
+# stock/monthly_sales/margin/visits/backorders_es/whitelist_waiting/priority) —
+# WITHOUT --apply, so it creates ZERO purchase orders. The Catalog RAG ficha
+# reads it via GET /api/purchase/suppliers/{picqerSupplierId}/products?run_id=.
+# (The Monday picker-purchase-recommend job is the one that actually applies POs.)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: picker-purchase-signals
+  labels:
+    app.kubernetes.io/component: cron
+    app.kubernetes.io/instance: picker
+spec:
+  schedule: "0 4 * * *"          # daily 04:00 — signal refresh only
+  timeZone: Europe/Madrid
+  suspend: false   # Job-pod-direct recommend (no serving-pod sqlite lock) → POST signals to rag-app Postgres
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3000
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: harbor-pull
+          nodeSelector:
+            role: edge
+            kubernetes.io/arch: amd64
+          tolerations:
+            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
+          containers:
+            - name: purchase-signals
+              image: shopify-app          # rewritten by overlay images: → skirmshop-picker
+              workingDir: /app
+              # Run the analyze DIRECTLY in this dedicated Job pod (reliable — no
+              # serving-pod sqlite lock) and POST the per-product signals to the
+              # catalog ficha (durable Postgres). NO POs (no --create-po).
+              command: ["python3", "scripts/recommend-purchases.py", "--post-signals-url", "http://rag-app/api/manufacturers/signals", "--source", "daily-signals"]
+              envFrom:
+                - secretRef: { name: picker-secrets }   # PICQER_API_KEY + GA4 creds
+              env:
+                - { name: NODE_ENV, value: "production" }
+                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
+                - { name: S3_BUCKET, value: "skirmshop-drive" }
+                - { name: S3_REGION, value: "us-east-1" }
+                - { name: S3_PREFIX, value: "price-lists" }
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
+                - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
+                  valueFrom: { secretKeyRef: { name: rag-secrets, key: CATALOG_SYNC_TOKEN } }
+              terminationMessagePolicy: FallbackToLogsOnError
+              resources:
+                requests: { cpu: 50m, memory: 128Mi }
+                limits: { memory: 384Mi }
