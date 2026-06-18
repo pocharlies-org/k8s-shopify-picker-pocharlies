@@ -50,6 +50,8 @@ spec:
                   valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
                 - name: AWS_SECRET_ACCESS_KEY
                   valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
+                - name: BRAIN_API_KEY
+                  valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
@@ -108,6 +110,8 @@ spec:
                   valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
                 - name: AWS_SECRET_ACCESS_KEY
                   valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
+                - name: BRAIN_API_KEY
+                  valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 # Synapse workflow fabric (engine + adapters incl. messaging/Hermes) still
                 # lives on sauvage user-systemd consuming from sauvage's docker rabbitmq.
                 # synapse-rmq is the in-cluster bridge Service that resolves to sauvage:5672.
@@ -192,6 +196,8 @@ spec:
                   valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
                 - name: AWS_SECRET_ACCESS_KEY
                   valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
+                - name: BRAIN_API_KEY
+                  valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
                   valueFrom: { secretKeyRef: { name: rag-secrets, key: CATALOG_SYNC_TOKEN } }
               terminationMessagePolicy: FallbackToLogsOnError
