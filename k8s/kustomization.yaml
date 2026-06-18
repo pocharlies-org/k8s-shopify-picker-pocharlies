@@ -20,7 +20,7 @@ labels:
 images:
   - name: shopify-app
     newName: harbor.e-dani.com/homelab/skirmshop-picker
-    digest: sha256:35e96fae09232d3f674986d0834b88b65b35aaf3d746d0ffe37959b826619f57
+    digest: sha256:fa3fa8ab71ec7d00072fa22614f76a57ba2a137cbc46f81155be693629117fe2
 
 patches:
   - target: { kind: Deployment, name: app }
