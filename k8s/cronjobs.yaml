@@ -104,12 +104,13 @@ spec:
                 - { name: PURCHASE_RECOMMEND_TIMEOUT_SECONDS, value: "3600" }
                 - { name: PURCHASE_COMPARE_TIMEOUT_SECONDS, value: "2400" }
                 - { name: PURCHASE_REPORT_TIMEOUT_SECONDS, value: "600" }
-                # Human gate (decision B, 2026-06-18): the weekly run RECOMMENDS + COMPARES
-                # + REPORTS but does NOT auto-apply to Picqer. A human reviews the report
-                # (WhatsApp/email) and applies via the picker plugin UI. POs are CONCEPT
-                # (not sent to suppliers); set PURCHASE_CRON_APPLY="1" to restore unattended
-                # auto-apply. concurrencyPolicy:Forbid still prevents self-overlap.
-                - { name: PURCHASE_CRON_APPLY, value: "0" }
+                # Weekly auto-apply (decision B reversed 2026-06-18 by the owner): the
+                # Monday run RECOMMENDS + COMPARES + APPLIES concept POs to Picqer
+                # automatically, then sends the report (WhatsApp/email). POs are CONCEPT
+                # (never sent to suppliers), so unattended auto-restock is the intended
+                # behaviour. Set PURCHASE_CRON_APPLY="0" to re-enable the human gate
+                # (review-only). concurrencyPolicy:Forbid still prevents self-overlap.
+                - { name: PURCHASE_CRON_APPLY, value: "1" }
                 - { name: PURCHASE_CRON_SEND_REPORT, value: "1" }
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
