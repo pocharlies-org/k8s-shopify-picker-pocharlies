@@ -42,14 +42,6 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
-                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
-                - { name: S3_BUCKET, value: "skirmshop-drive" }
-                - { name: S3_REGION, value: "us-east-1" }
-                - { name: S3_PREFIX, value: "price-lists" }
-                - name: AWS_ACCESS_KEY_ID
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
-                - name: AWS_SECRET_ACCESS_KEY
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
                 - name: BRAIN_API_KEY
                   valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: DB_USER
@@ -102,14 +94,6 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
-                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
-                - { name: S3_BUCKET, value: "skirmshop-drive" }
-                - { name: S3_REGION, value: "us-east-1" }
-                - { name: S3_PREFIX, value: "price-lists" }
-                - name: AWS_ACCESS_KEY_ID
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
-                - name: AWS_SECRET_ACCESS_KEY
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
                 - name: BRAIN_API_KEY
                   valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 # Synapse workflow fabric (engine + adapters incl. messaging/Hermes) still
@@ -139,12 +123,13 @@ spec:
                 path: /etc/synapse/credentials
                 type: Directory
 ---
-# F4 signal-refresh: daily analyze-only run. A thin HTTP client that POSTs
-# /api/purchase/review to the LIVE picker Service so the long-lived server pod
-# persists a fresh purchase_run with product_details (per-product signals:
-# stock/monthly_sales/margin/visits/backorders_es/whitelist_waiting/priority) —
-# WITHOUT --apply, so it creates ZERO purchase orders. The Catalog RAG ficha
-# reads it via GET /api/purchase/suppliers/{picqerSupplierId}/products?run_id=.
+# F4 signal-refresh: daily analyze-only run. Runs recommend-purchases.py DIRECTLY
+# in this dedicated Job pod (no serving-pod sqlite lock) and POSTs per-product
+# signals (stock/monthly_sales/margin/visits/backorders_es/whitelist_waiting/
+# priority/needed) to the Catalog RAG via --post-signals-url → rag-app
+# /api/manufacturers/signals (durable Postgres ProductSignal). NO --apply / no
+# --create-po, so it creates ZERO purchase orders. The ficha reads ProductSignal
+# via Prisma (join productcode_supplier == manufacturerSku).
 # (The Monday picker-purchase-recommend job is the one that actually applies POs.)
 apiVersion: batch/v1
 kind: CronJob
@@ -188,14 +173,6 @@ spec:
                 - secretRef: { name: picker-secrets }   # PICQER_API_KEY + GA4 creds
               env:
                 - { name: NODE_ENV, value: "production" }
-                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
-                - { name: S3_BUCKET, value: "skirmshop-drive" }
-                - { name: S3_REGION, value: "us-east-1" }
-                - { name: S3_PREFIX, value: "price-lists" }
-                - name: AWS_ACCESS_KEY_ID
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
-                - name: AWS_SECRET_ACCESS_KEY
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
                 - name: BRAIN_API_KEY
                   valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
