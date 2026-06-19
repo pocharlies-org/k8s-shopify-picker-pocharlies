@@ -171,7 +171,10 @@ spec:
             - { key: role, operator: Equal, value: edge, effect: NoSchedule }
           containers:
             - name: purchase-signals
-              image: shopify-app          # rewritten by overlay images: → skirmshop-picker
+              # Keep this signal-refresh CronJob on the last image known to support
+              # --post-signals-url/--source. The app deployment still uses the
+              # overlay image digest from kustomization.yaml.
+              image: harbor.e-dani.com/homelab/skirmshop-picker@sha256:bd97534f6d3b07069b7bc5e2072ea109867e4c5aa342598d68e6f4404ea856a2
               workingDir: /app
               # Run the analyze DIRECTLY in this dedicated Job pod (reliable — no
               # serving-pod sqlite lock) and POST the per-product signals to the
