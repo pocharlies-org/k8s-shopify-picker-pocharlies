@@ -259,3 +259,56 @@ spec:
               resources:
                 requests: { cpu: 20m, memory: 32Mi }
                 limits: { memory: 64Mi }
+---
+# Retention sweep: bounds growth of the Postgres run-state tables (picker schema).
+# Now that run-state is durable Postgres (not ephemeral SQLite), snapshot/run
+# tables accumulate — the daily GA4 refresh alone adds a large demand_metrics
+# snapshot/day. enforce_retention() keeps the newest N=5 snapshots per group,
+# the newest 200/90d purchase_runs, and 200 purchase_prompts; readers always use
+# get_latest_* so pruning is safe. Runs at 05:00 (after GA4 03:30 + signals 04:00).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: picker-retention
+  labels:
+    app.kubernetes.io/component: cron
+    app.kubernetes.io/instance: picker
+spec:
+  schedule: "0 5 * * *"          # daily 05:00 — prune old snapshots/runs
+  timeZone: Europe/Madrid
+  suspend: false
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: harbor-pull
+          nodeSelector:
+            role: edge
+            kubernetes.io/arch: amd64
+          tolerations:
+            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
+          containers:
+            - name: retention
+              image: shopify-app          # rewritten by overlay images: → skirmshop-picker
+              workingDir: /app
+              command: ["python3", "scripts/enforce-retention.py"]
+              env:
+                - { name: NODE_ENV, value: "production" }
+                - name: DB_USER
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
+                - name: DB_PASSWORD
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+              terminationMessagePolicy: FallbackToLogsOnError
+              resources:
+                requests: { cpu: 50m, memory: 128Mi }
+                limits: { memory: 384Mi }

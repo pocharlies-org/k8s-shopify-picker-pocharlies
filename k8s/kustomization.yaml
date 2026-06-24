@@ -20,12 +20,11 @@ labels:
 images:
   - name: shopify-app
     newName: harbor.e-dani.com/homelab/skirmshop-picker
-    # Unified image: current source + Postgres run-state backend (psycopg v3)
-    # + MOQ/pack rounding (respects Picqer minimum_purchase_quantity and
-    # purchase_in_quantities_of in recommended qty). Built from
-    # skirmshop-picqer@main 70342a5. Supersedes 18ef9db8 (postgres-only); all
-    # picker workloads share this image.
-    digest: sha256:92eeb7face2ea23305751bce7e77f4265b13539b73078bf6a3121da59a3058ae
+    # Unified image: Postgres run-state backend (psycopg v3) + MOQ/pack rounding
+    # + snapshot/run retention (enforce_retention) + GA4 composite-itemId matching
+    # (shopify_<mkt>_<product>_<variant>) and higher GA4 row cap. Built from
+    # skirmshop-picqer@main 176110c. All picker workloads share this image.
+    digest: sha256:0bb67689171f51fe49c547cc6e62783a74240bfe649ee5baedda012910b418b0
 
 patches:
   - target: { kind: Deployment, name: app }
