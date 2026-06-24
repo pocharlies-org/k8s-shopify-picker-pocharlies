@@ -87,11 +87,11 @@ spec:
             - { key: role, operator: Equal, value: edge, effect: NoSchedule }
           containers:
             - name: purchase-recommend
-              # Keep the weekly apply/report CronJob on the image that contains
-              # scripts/run-purchase-cron.sh. The overlay app image currently
-              # lacks that wrapper and the last Monday run failed at container
-              # start before it could emit Brain feedback.
-              image: harbor.e-dani.com/homelab/skirmshop-picker@sha256:bd97534f6d3b07069b7bc5e2072ea109867e4c5aa342598d68e6f4404ea856a2
+              # Unified picker image (kustomization images: digest): current source
+              # WITH scripts/run-purchase-cron.sh + Postgres run-state backend.
+              # Supersedes the temporary bd97534 pin and the stale April overlay that
+              # caused the 2026-06-22 StartError (missing wrapper script).
+              image: shopify-app
               workingDir: /app
               command: ["scripts/run-purchase-cron.sh"]
               envFrom:
@@ -175,10 +175,10 @@ spec:
             - { key: role, operator: Equal, value: edge, effect: NoSchedule }
           containers:
             - name: purchase-signals
-              # Keep this signal-refresh CronJob on the last image known to support
-              # --post-signals-url/--source. The app deployment still uses the
-              # overlay image digest from kustomization.yaml.
-              image: harbor.e-dani.com/homelab/skirmshop-picker@sha256:bd97534f6d3b07069b7bc5e2072ea109867e4c5aa342598d68e6f4404ea856a2
+              # Unified picker image (kustomization images: digest): current source
+              # supports --post-signals-url/--source AND the Postgres run-state backend.
+              # No longer needs a separate pin — all picker workloads share one image.
+              image: shopify-app
               workingDir: /app
               # Run the analyze DIRECTLY in this dedicated Job pod (reliable — no
               # serving-pod sqlite lock) and POST the per-product signals to the
@@ -192,6 +192,14 @@ spec:
                   valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
                   valueFrom: { secretKeyRef: { name: rag-secrets, key: CATALOG_SYNC_TOKEN } }
+                # Shared Postgres run-state/config (picker schema): the daily signal run
+                # persists demand snapshots durably instead of pod-local SQLite, so the
+                # Monday recommend run can reuse them. Backend auto-selected by DATABASE_URL.
+                - name: DB_USER
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
+                - name: DB_PASSWORD
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
               terminationMessagePolicy: FallbackToLogsOnError
               resources:
                 requests: { cpu: 50m, memory: 128Mi }

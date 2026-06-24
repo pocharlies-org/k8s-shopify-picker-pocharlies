@@ -20,7 +20,11 @@ labels:
 images:
   - name: shopify-app
     newName: harbor.e-dani.com/homelab/skirmshop-picker
-    digest: sha256:9be0b2505312797fbd0d076f80bd06e43367cf7e956a098f4ad08d51ed970979
+    # Unified image: current source + Postgres run-state backend (psycopg v3).
+    # Built from skirmshop-picqer@feat/postgres-runstate (444ed9c). Replaces the
+    # stale April build sha256:9be0b25… that lacked scripts/run-purchase-cron.sh
+    # (root cause of the 2026-06-22 StartError). All picker workloads share this image.
+    digest: sha256:18ef9db84a94fe1f1f59c1050b59e6d721c191731050e2bdcd9aa3c9e666a13f
 
 patches:
   - target: { kind: Deployment, name: app }
@@ -43,6 +47,14 @@ patches:
                   - { name: SCOPES, value: "read_products,read_inventory,read_orders,read_reports,read_customers,read_customer_address,read_customer_email,read_customer_name,read_customer_phone" }
                   - name: BRAIN_API_KEY
                     valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
+                  # Shared Postgres run-state/config (picker schema): server.py shares
+                  # purchase runs/config/snapshots with the cron jobs instead of
+                  # ephemeral pod-local SQLite. Backend auto-selected by DATABASE_URL.
+                  - name: DB_USER
+                    valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
+                  - name: DB_PASSWORD
+                    valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
+                  - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
                 envFrom:
                   - secretRef: { name: picker-secrets }
   - target: { group: apps, version: v1, kind: Deployment, name: app }
