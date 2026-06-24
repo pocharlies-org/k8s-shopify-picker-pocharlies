@@ -116,6 +116,8 @@ spec:
                 # (review-only). concurrencyPolicy:Forbid still prevents self-overlap.
                 - { name: PURCHASE_CRON_APPLY, value: "1" }
                 - { name: PURCHASE_CRON_SEND_REPORT, value: "1" }
+                # Back-in-stock whitelist demand signal (token via picker-secrets ESO).
+                - { name: BACK_IN_STOCK_URL, value: "http://back-in-stock-app" }
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
@@ -192,6 +194,8 @@ spec:
                   valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
                   valueFrom: { secretKeyRef: { name: rag-secrets, key: CATALOG_SYNC_TOKEN } }
+                # Back-in-stock whitelist demand signal (token via picker-secrets ESO).
+                - { name: BACK_IN_STOCK_URL, value: "http://back-in-stock-app" }
                 # Shared Postgres run-state/config (picker schema): the daily signal run
                 # persists demand snapshots durably instead of pod-local SQLite, so the
                 # Monday recommend run can reuse them. Backend auto-selected by DATABASE_URL.
