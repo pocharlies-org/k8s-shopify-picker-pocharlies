@@ -21,10 +21,10 @@ images:
   - name: shopify-app
     newName: harbor.e-dani.com/homelab/skirmshop-picker
     # Unified image: Postgres backend + MOQ/pack rounding + retention + GA4
-    # composite-itemId matching + real on-order (incoming_concept/purchased_qty
+    # composite-itemId matching + real on-order + supplier minimum-order-value flagging (incoming_concept/purchased_qty
     # emitted from current POs). Built from skirmshop-picqer@main d3aacb9.
     # All picker workloads share this image.
-    digest: sha256:bd94bba9b51ecf9efbe3f0cd8abf38d972028bd0498031a2be46070613c88074
+    digest: sha256:5b5cc1720598c3315a01def6ff49bc5483980485d09e6be4936a97a546df87f9
 
 patches:
   - target: { kind: Deployment, name: app }
