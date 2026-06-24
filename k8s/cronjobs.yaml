@@ -204,3 +204,58 @@ spec:
               resources:
                 requests: { cpu: 50m, memory: 128Mi }
                 limits: { memory: 384Mi }
+---
+# GA4 demand-signal refresh: pokes the picker server's existing
+# POST /api/purchase/ga4/refresh so the GA4 item-level metrics snapshot
+# (picker.demand_metrics_snapshots, source=ga4_data_api) is rebuilt daily into
+# shared Postgres. The Monday picker-purchase-recommend run reads the latest
+# ready snapshot (latest_demand_metrics_snapshot) → GA4 visits feed the
+# visits-gate. Runs at 03:30, before signals (04:00) and Monday recommend (06:00).
+# async=false → the Job waits until the refresh finishes (success == snapshot written).
+# Needs Postgres-shared so server + cron see the same snapshot (already wired).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: picker-ga4-refresh
+  labels:
+    app.kubernetes.io/component: cron
+    app.kubernetes.io/instance: picker
+spec:
+  schedule: "30 3 * * *"          # daily 03:30 — refresh GA4 demand snapshot
+  timeZone: Europe/Madrid
+  suspend: false
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            role: edge
+            kubernetes.io/arch: amd64
+          tolerations:
+            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
+          containers:
+            - name: ga4-refresh
+              image: curlimages/curl:8.13.0
+              env:
+                - name: PURCHASE_API_TOKEN
+                  valueFrom: { secretKeyRef: { name: picker-secrets, key: PURCHASE_API_TOKEN } }
+              command: ["sh", "-c"]
+              args:
+                - >
+                  curl -fsS --max-time 780 -X POST
+                  -H "Authorization: Bearer $PURCHASE_API_TOKEN"
+                  -H "Content-Type: application/json"
+                  -d '{"async": false}'
+                  http://skirmshop-picker/api/purchase/ga4/refresh
+              terminationMessagePolicy: FallbackToLogsOnError
+              resources:
+                requests: { cpu: 20m, memory: 32Mi }
+                limits: { memory: 64Mi }

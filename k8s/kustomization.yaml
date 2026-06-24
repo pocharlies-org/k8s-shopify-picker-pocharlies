@@ -20,11 +20,12 @@ labels:
 images:
   - name: shopify-app
     newName: harbor.e-dani.com/homelab/skirmshop-picker
-    # Unified image: current source + Postgres run-state backend (psycopg v3).
-    # Built from skirmshop-picqer@feat/postgres-runstate (444ed9c). Replaces the
-    # stale April build sha256:9be0b25… that lacked scripts/run-purchase-cron.sh
-    # (root cause of the 2026-06-22 StartError). All picker workloads share this image.
-    digest: sha256:18ef9db84a94fe1f1f59c1050b59e6d721c191731050e2bdcd9aa3c9e666a13f
+    # Unified image: current source + Postgres run-state backend (psycopg v3)
+    # + MOQ/pack rounding (respects Picqer minimum_purchase_quantity and
+    # purchase_in_quantities_of in recommended qty). Built from
+    # skirmshop-picqer@main 70342a5. Supersedes 18ef9db8 (postgres-only); all
+    # picker workloads share this image.
+    digest: sha256:92eeb7face2ea23305751bce7e77f4265b13539b73078bf6a3121da59a3058ae
 
 patches:
   - target: { kind: Deployment, name: app }
