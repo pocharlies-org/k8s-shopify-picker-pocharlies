@@ -22,9 +22,10 @@ images:
     newName: harbor.e-dani.com/homelab/skirmshop-picker
     # Unified image: Postgres backend + MOQ/pack rounding + retention + GA4
     # composite-itemId matching + real on-order + supplier minimum-order-value flagging (incoming_concept/purchased_qty
-    # emitted from current POs). Built from skirmshop-picqer@main d3aacb9.
-    # All picker workloads share this image.
-    digest: sha256:5b5cc1720598c3315a01def6ff49bc5483980485d09e6be4936a97a546df87f9
+    # emitted from current POs) + SSO-identity trust on /api/purchase/* so the
+    # standalone /plugins/purchase-orders UI works behind Keycloak SSO.
+    # Built from skirmshop-picqer@main 0780154. All picker workloads share this image.
+    digest: sha256:d92e92cad63c4a6bb713c206fee8335fbb4a3f1d64cd24e60ab4420767ab3ab8
 
 patches:
   - target: { kind: Deployment, name: app }
