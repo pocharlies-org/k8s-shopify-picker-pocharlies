@@ -24,8 +24,8 @@ images:
     # composite-itemId matching + real on-order + supplier minimum-order-value flagging (incoming_concept/purchased_qty
     # emitted from current POs) + SSO-identity trust on /api/purchase/* so the
     # standalone /plugins/purchase-orders UI works behind Keycloak SSO.
-    # Built from skirmshop-picqer@main 0780154. All picker workloads share this image.
-    digest: sha256:d92e92cad63c4a6bb713c206fee8335fbb4a3f1d64cd24e60ab4420767ab3ab8
+    # Built from skirmshop-picqer@main 4e99aff. All picker workloads share this image.
+    digest: sha256:15c035fc42e8d2f03fad2735996b3acbc52d56a317ce9cdb107c15deb4df4435
 
 patches:
   - target: { kind: Deployment, name: app }
