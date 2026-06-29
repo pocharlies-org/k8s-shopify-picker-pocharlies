@@ -42,14 +42,8 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
-                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
-                - { name: S3_BUCKET, value: "skirmshop-drive" }
-                - { name: S3_REGION, value: "us-east-1" }
-                - { name: S3_PREFIX, value: "price-lists" }
-                - name: AWS_ACCESS_KEY_ID
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
-                - name: AWS_SECRET_ACCESS_KEY
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
+                - name: BRAIN_API_KEY
+                  valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
@@ -93,6 +87,10 @@ spec:
             - { key: role, operator: Equal, value: edge, effect: NoSchedule }
           containers:
             - name: purchase-recommend
+              # Unified picker image (kustomization images: digest): current source
+              # WITH scripts/run-purchase-cron.sh + Postgres run-state backend.
+              # Supersedes the temporary bd97534 pin and the stale April overlay that
+              # caused the 2026-06-22 StartError (missing wrapper script).
               image: shopify-app
               workingDir: /app
               command: ["scripts/run-purchase-cron.sh"]
@@ -100,14 +98,8 @@ spec:
                 - secretRef: { name: picker-secrets }
               env:
                 - { name: NODE_ENV, value: "production" }
-                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
-                - { name: S3_BUCKET, value: "skirmshop-drive" }
-                - { name: S3_REGION, value: "us-east-1" }
-                - { name: S3_PREFIX, value: "price-lists" }
-                - name: AWS_ACCESS_KEY_ID
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
-                - name: AWS_SECRET_ACCESS_KEY
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
+                - name: BRAIN_API_KEY
+                  valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 # Synapse workflow fabric (engine + adapters incl. messaging/Hermes) still
                 # lives on sauvage user-systemd consuming from sauvage's docker rabbitmq.
                 # synapse-rmq is the in-cluster bridge Service that resolves to sauvage:5672.
@@ -116,6 +108,16 @@ spec:
                 - { name: PURCHASE_RECOMMEND_TIMEOUT_SECONDS, value: "3600" }
                 - { name: PURCHASE_COMPARE_TIMEOUT_SECONDS, value: "2400" }
                 - { name: PURCHASE_REPORT_TIMEOUT_SECONDS, value: "600" }
+                # Weekly auto-apply (decision B reversed 2026-06-18 by the owner): the
+                # Monday run RECOMMENDS + COMPARES + APPLIES concept POs to Picqer
+                # automatically, then sends the report (WhatsApp/email). POs are CONCEPT
+                # (never sent to suppliers), so unattended auto-restock is the intended
+                # behaviour. Set PURCHASE_CRON_APPLY="0" to re-enable the human gate
+                # (review-only). concurrencyPolicy:Forbid still prevents self-overlap.
+                - { name: PURCHASE_CRON_APPLY, value: "1" }
+                - { name: PURCHASE_CRON_SEND_REPORT, value: "1" }
+                # Back-in-stock whitelist demand signal (token via picker-secrets ESO).
+                - { name: BACK_IN_STOCK_URL, value: "http://back-in-stock-app" }
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
@@ -135,12 +137,13 @@ spec:
                 path: /etc/synapse/credentials
                 type: Directory
 ---
-# F4 signal-refresh: daily analyze-only run. A thin HTTP client that POSTs
-# /api/purchase/review to the LIVE picker Service so the long-lived server pod
-# persists a fresh purchase_run with product_details (per-product signals:
-# stock/monthly_sales/margin/visits/backorders_es/whitelist_waiting/priority) —
-# WITHOUT --apply, so it creates ZERO purchase orders. The Catalog RAG ficha
-# reads it via GET /api/purchase/suppliers/{picqerSupplierId}/products?run_id=.
+# F4 signal-refresh: daily analyze-only run. Runs recommend-purchases.py DIRECTLY
+# in this dedicated Job pod (no serving-pod sqlite lock) and POSTs per-product
+# signals (stock/monthly_sales/margin/visits/backorders_es/whitelist_waiting/
+# priority/needed) to the Catalog RAG via --post-signals-url → rag-app
+# /api/manufacturers/signals (durable Postgres ProductSignal). NO --apply / no
+# --create-po, so it creates ZERO purchase orders. The ficha reads ProductSignal
+# via Prisma (join productcode_supplier == manufacturerSku).
 # (The Monday picker-purchase-recommend job is the one that actually applies POs.)
 apiVersion: batch/v1
 kind: CronJob
@@ -174,7 +177,10 @@ spec:
             - { key: role, operator: Equal, value: edge, effect: NoSchedule }
           containers:
             - name: purchase-signals
-              image: shopify-app          # rewritten by overlay images: → skirmshop-picker
+              # Unified picker image (kustomization images: digest): current source
+              # supports --post-signals-url/--source AND the Postgres run-state backend.
+              # No longer needs a separate pin — all picker workloads share one image.
+              image: shopify-app
               workingDir: /app
               # Run the analyze DIRECTLY in this dedicated Job pod (reliable — no
               # serving-pod sqlite lock) and POST the per-product signals to the
@@ -184,16 +190,128 @@ spec:
                 - secretRef: { name: picker-secrets }   # PICQER_API_KEY + GA4 creds
               env:
                 - { name: NODE_ENV, value: "production" }
-                - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
-                - { name: S3_BUCKET, value: "skirmshop-drive" }
-                - { name: S3_REGION, value: "us-east-1" }
-                - { name: S3_PREFIX, value: "price-lists" }
-                - name: AWS_ACCESS_KEY_ID
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
-                - name: AWS_SECRET_ACCESS_KEY
-                  valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
+                - name: BRAIN_API_KEY
+                  valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
                   valueFrom: { secretKeyRef: { name: rag-secrets, key: CATALOG_SYNC_TOKEN } }
+                # Back-in-stock whitelist demand signal (token via picker-secrets ESO).
+                - { name: BACK_IN_STOCK_URL, value: "http://back-in-stock-app" }
+                # Shared Postgres run-state/config (picker schema): the daily signal run
+                # persists demand snapshots durably instead of pod-local SQLite, so the
+                # Monday recommend run can reuse them. Backend auto-selected by DATABASE_URL.
+                - name: DB_USER
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
+                - name: DB_PASSWORD
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+              terminationMessagePolicy: FallbackToLogsOnError
+              resources:
+                requests: { cpu: 50m, memory: 128Mi }
+                limits: { memory: 384Mi }
+---
+# GA4 demand-signal refresh: pokes the picker server's existing
+# POST /api/purchase/ga4/refresh so the GA4 item-level metrics snapshot
+# (picker.demand_metrics_snapshots, source=ga4_data_api) is rebuilt daily into
+# shared Postgres. The Monday picker-purchase-recommend run reads the latest
+# ready snapshot (latest_demand_metrics_snapshot) → GA4 visits feed the
+# visits-gate. Runs at 03:30, before signals (04:00) and Monday recommend (06:00).
+# async=false → the Job waits until the refresh finishes (success == snapshot written).
+# Needs Postgres-shared so server + cron see the same snapshot (already wired).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: picker-ga4-refresh
+  labels:
+    app.kubernetes.io/component: cron
+    app.kubernetes.io/instance: picker
+spec:
+  schedule: "30 3 * * *"          # daily 03:30 — refresh GA4 demand snapshot
+  timeZone: Europe/Madrid
+  suspend: false
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            role: edge
+            kubernetes.io/arch: amd64
+          tolerations:
+            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
+          containers:
+            - name: ga4-refresh
+              image: curlimages/curl:8.13.0
+              env:
+                - name: PURCHASE_API_TOKEN
+                  valueFrom: { secretKeyRef: { name: picker-secrets, key: PURCHASE_API_TOKEN } }
+              command: ["sh", "-c"]
+              args:
+                - >
+                  curl -fsS --max-time 780 -X POST
+                  -H "Authorization: Bearer $PURCHASE_API_TOKEN"
+                  -H "Content-Type: application/json"
+                  -d '{"async": false}'
+                  http://skirmshop-picker/api/purchase/ga4/refresh
+              terminationMessagePolicy: FallbackToLogsOnError
+              resources:
+                requests: { cpu: 20m, memory: 32Mi }
+                limits: { memory: 64Mi }
+---
+# Retention sweep: bounds growth of the Postgres run-state tables (picker schema).
+# Now that run-state is durable Postgres (not ephemeral SQLite), snapshot/run
+# tables accumulate — the daily GA4 refresh alone adds a large demand_metrics
+# snapshot/day. enforce_retention() keeps the newest N=5 snapshots per group,
+# the newest 200/90d purchase_runs, and 200 purchase_prompts; readers always use
+# get_latest_* so pruning is safe. Runs at 05:00 (after GA4 03:30 + signals 04:00).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: picker-retention
+  labels:
+    app.kubernetes.io/component: cron
+    app.kubernetes.io/instance: picker
+spec:
+  schedule: "0 5 * * *"          # daily 05:00 — prune old snapshots/runs
+  timeZone: Europe/Madrid
+  suspend: false
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: harbor-pull
+          nodeSelector:
+            role: edge
+            kubernetes.io/arch: amd64
+          tolerations:
+            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
+          containers:
+            - name: retention
+              image: shopify-app          # rewritten by overlay images: → skirmshop-picker
+              workingDir: /app
+              command: ["python3", "scripts/enforce-retention.py"]
+              env:
+                - { name: NODE_ENV, value: "production" }
+                - name: DB_USER
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
+                - name: DB_PASSWORD
+                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
               terminationMessagePolicy: FallbackToLogsOnError
               resources:
                 requests: { cpu: 50m, memory: 128Mi }

@@ -10,6 +10,7 @@ resources:
   - routing.yaml
   - cronjobs.yaml
   - externalsecret-ga4.yaml
+  - externalsecret-brain-feedback.yaml
 
 labels:
   - includeSelectors: true
@@ -19,7 +20,11 @@ labels:
 images:
   - name: shopify-app
     newName: harbor.e-dani.com/homelab/skirmshop-picker
-    digest: sha256:bd97534f6d3b07069b7bc5e2072ea109867e4c5aa342598d68e6f4404ea856a2
+    # Unified image: Postgres backend + MOQ/pack rounding + retention + GA4
+    # composite-itemId matching + real on-order + supplier minimum-order-value
+    # flagging + Shopify-only paid/unfulfilled demand not yet in Picqer.
+    # Built from skirmshop-picqer@main edf8983. All picker workloads share this image.
+    digest: sha256:083914dc6c127540c531082825538efd1973900c2145f857832734fac86e219f
 
 patches:
   - target: { kind: Deployment, name: app }
@@ -39,17 +44,21 @@ patches:
                   # as a direct env var it shadows the real scopes. Must match this app's
                   # shopify.app.toml access_scopes and k8s/expected-scopes.txt
                   # (guarded by scripts/verify-scopes.sh).
-                  - { name: SCOPES, value: "read_products,read_inventory,read_orders,read_reports,read_customers,read_customer_address,read_customer_email,read_customer_name,read_customer_phone" }
-                  - { name: S3_ENDPOINT, value: "http://skirmshop-drive-s3.backup-hub.svc.cluster.local:9000" }
-                  - { name: S3_BUCKET, value: "skirmshop-drive" }
-                  - { name: S3_REGION, value: "us-east-1" }
-                  - { name: S3_PREFIX, value: "price-lists" }
-                  - name: AWS_ACCESS_KEY_ID
-                    valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_ACCESS_KEY_ID } }
-                  - name: AWS_SECRET_ACCESS_KEY
-                    valueFrom: { secretKeyRef: { name: skirmshop-drive-s3-app, key: AWS_SECRET_ACCESS_KEY } }
+                  - { name: SCOPES, value: "read_products,read_inventory,read_orders,read_reports" }
+                  - name: BRAIN_API_KEY
+                    valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
+                  # Shared Postgres run-state/config (picker schema): server.py shares
+                  # purchase runs/config/snapshots with the cron jobs instead of
+                  # ephemeral pod-local SQLite. Backend auto-selected by DATABASE_URL.
+                  - name: DB_USER
+                    valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
+                  - name: DB_PASSWORD
+                    valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
+                  - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
                 envFrom:
                   - secretRef: { name: picker-secrets }
+            imagePullSecrets:
+              - name: harbor-pull
   - target: { group: apps, version: v1, kind: Deployment, name: app }
     patch: |-
       - op: replace
