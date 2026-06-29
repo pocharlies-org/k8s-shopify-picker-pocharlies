@@ -21,11 +21,10 @@ images:
   - name: shopify-app
     newName: harbor.e-dani.com/homelab/skirmshop-picker
     # Unified image: Postgres backend + MOQ/pack rounding + retention + GA4
-    # composite-itemId matching + real on-order + supplier minimum-order-value flagging (incoming_concept/purchased_qty
-    # emitted from current POs) + SSO-identity trust on /api/purchase/* so the
-    # standalone /plugins/purchase-orders UI works behind Keycloak SSO.
-    # Built from skirmshop-picqer@main 4e99aff. All picker workloads share this image.
-    digest: sha256:15c035fc42e8d2f03fad2735996b3acbc52d56a317ce9cdb107c15deb4df4435
+    # composite-itemId matching + real on-order + supplier minimum-order-value
+    # flagging + Shopify-only paid/unfulfilled demand not yet in Picqer.
+    # Built from skirmshop-picqer@main edf8983. All picker workloads share this image.
+    digest: sha256:083914dc6c127540c531082825538efd1973900c2145f857832734fac86e219f
 
 patches:
   - target: { kind: Deployment, name: app }
@@ -45,7 +44,7 @@ patches:
                   # as a direct env var it shadows the real scopes. Must match this app's
                   # shopify.app.toml access_scopes and k8s/expected-scopes.txt
                   # (guarded by scripts/verify-scopes.sh).
-                  - { name: SCOPES, value: "read_products,read_inventory,read_orders,read_reports,read_customers,read_customer_address,read_customer_email,read_customer_name,read_customer_phone" }
+                  - { name: SCOPES, value: "read_products,read_inventory,read_orders,read_reports" }
                   - name: BRAIN_API_KEY
                     valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                   # Shared Postgres run-state/config (picker schema): server.py shares
@@ -58,6 +57,8 @@ patches:
                   - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
                 envFrom:
                   - secretRef: { name: picker-secrets }
+            imagePullSecrets:
+              - name: harbor-pull
   - target: { group: apps, version: v1, kind: Deployment, name: app }
     patch: |-
       - op: replace
