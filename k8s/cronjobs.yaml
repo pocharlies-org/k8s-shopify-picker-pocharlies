@@ -193,7 +193,7 @@ spec:
                 - name: BRAIN_API_KEY
                   valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
                 - name: RAG_SIGNALS_TOKEN          # x-catalog-token for POST /api/manufacturers/signals
-                  valueFrom: { secretKeyRef: { name: rag-secrets, key: CATALOG_SYNC_TOKEN } }
+                  valueFrom: { secretKeyRef: { name: catalog-api-client, key: CATALOG_SYNC_TOKEN } }
                 # Back-in-stock whitelist demand signal (token via picker-secrets ESO).
                 - { name: BACK_IN_STOCK_URL, value: "http://back-in-stock-app" }
                 # Shared Postgres run-state/config (picker schema): the daily signal run
