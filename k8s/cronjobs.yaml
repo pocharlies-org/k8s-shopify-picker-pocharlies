@@ -48,7 +48,12 @@ spec:
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
-                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+                # connection_limit 3: sin él Prisma dimensiona el pool con
+                # `cpus_fisicos * 2 + 1` del HOST (sauvage, 48 vCPU) y un solo
+                # Job podía abrir ~49 conexiones de golpe contra el
+                # postgres-shared compartido. Un batch secuencial no necesita
+                # más de 3. Ver el postmortem del 28-07-2026.
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connection_limit=3&pool_timeout=15&connect_timeout=10&application_name=picker-cron" }
               resources:
                 requests: { cpu: 50m, memory: 128Mi }
                 limits: { memory: 512Mi }
@@ -122,7 +127,12 @@ spec:
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
-                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+                # connection_limit 3: sin él Prisma dimensiona el pool con
+                # `cpus_fisicos * 2 + 1` del HOST (sauvage, 48 vCPU) y un solo
+                # Job podía abrir ~49 conexiones de golpe contra el
+                # postgres-shared compartido. Un batch secuencial no necesita
+                # más de 3. Ver el postmortem del 28-07-2026.
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connection_limit=3&pool_timeout=15&connect_timeout=10&application_name=picker-cron" }
               volumeMounts:
                 - name: synapse-credentials
                   mountPath: /etc/synapse/credentials
@@ -203,7 +213,12 @@ spec:
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
-                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+                # connection_limit 3: sin él Prisma dimensiona el pool con
+                # `cpus_fisicos * 2 + 1` del HOST (sauvage, 48 vCPU) y un solo
+                # Job podía abrir ~49 conexiones de golpe contra el
+                # postgres-shared compartido. Un batch secuencial no necesita
+                # más de 3. Ver el postmortem del 28-07-2026.
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connection_limit=3&pool_timeout=15&connect_timeout=10&application_name=picker-cron" }
               terminationMessagePolicy: FallbackToLogsOnError
               resources:
                 requests: { cpu: 50m, memory: 128Mi }
@@ -311,7 +326,12 @@ spec:
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
-                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop" }
+                # connection_limit 3: sin él Prisma dimensiona el pool con
+                # `cpus_fisicos * 2 + 1` del HOST (sauvage, 48 vCPU) y un solo
+                # Job podía abrir ~49 conexiones de golpe contra el
+                # postgres-shared compartido. Un batch secuencial no necesita
+                # más de 3. Ver el postmortem del 28-07-2026.
+                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connection_limit=3&pool_timeout=15&connect_timeout=10&application_name=picker-cron" }
               terminationMessagePolicy: FallbackToLogsOnError
               resources:
                 requests: { cpu: 50m, memory: 128Mi }
