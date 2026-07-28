@@ -54,15 +54,15 @@ patches:
                     valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                   - name: DB_PASSWORD
                     valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
-                  # connection_limit: sin él Prisma dimensiona el pool con
-                  # `cpus_fisicos * 2 + 1` LEIDO DEL HOST, no del límite del
-                  # contenedor. El pod va a `role: edge` (sauvage, 48 vCPU, sin
-                  # cpu limit) y el framework instancia un PrismaClient además
-                  # del de la app → techo ~98 por pod. Ver el postmortem del
-                  # 28-07-2026 en la base del framework. Este overlay
-                  # sobrescribe DATABASE_URL, así que NO hereda el default
-                  # acotado de base/deployment.yaml.
-                  - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connection_limit=5&pool_timeout=15&connect_timeout=10&application_name=skirmshop-picker" }
+                  # OJO: esta app es Python con psycopg 3, NO Prisma como el
+                  # resto de los shopify-app. psycopg valida la query string
+                  # contra libpq y aborta con `invalid URI query parameter` ante
+                  # cualquier clave que no reconozca — `connection_limit` y
+                  # `pool_timeout` la tumban en el arranque (comprobado el
+                  # 28-07-2026). Aquí solo caben parámetros de libpq.
+                  # No hace falta acotar pool: purchase_config.connect() abre y
+                  # cierra la conexión en un `with`, no mantiene ninguno.
+                  - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connect_timeout=10&application_name=skirmshop-picker" }
                 envFrom:
                   - secretRef: { name: picker-secrets }
             imagePullSecrets:
