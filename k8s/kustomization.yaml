@@ -22,9 +22,10 @@ images:
     newName: harbor.e-dani.com/homelab/skirmshop-picker
     # Unified image: Postgres backend + MOQ/pack rounding + retention + GA4
     # composite-itemId matching + real on-order + supplier minimum-order-value
-    # flagging + Shopify-only paid/unfulfilled demand not yet in Picqer.
-    # Built from skirmshop-picqer@main edf8983. All picker workloads share this image.
-    digest: sha256:083914dc6c127540c531082825538efd1973900c2145f857832734fac86e219f
+    # flagging + Shopify-only paid/unfulfilled demand not yet in Picqer
+    # + backorders covered by stock no longer counted as demand (PR #3).
+    # Built from skirmshop-picqer@main 77e4600. All picker workloads share this image.
+    digest: sha256:c34f4c156e75f17c4df96f01232a476926f1856877c2938e9fff32947262a311
 
 patches:
   - target: { kind: Deployment, name: app }
