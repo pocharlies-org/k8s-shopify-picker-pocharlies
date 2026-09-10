@@ -67,7 +67,7 @@ spec:
   timeZone: Europe/Madrid
   # MIGRATION: runtime-verified OK (image has python3 + the scripts). Staged suspended;
   # unsuspend at cutover AFTER removing the matching sauvage host cron line (avoid double-run).
-  suspend: false   # ACTIVE — sauvage host cron line removed at cutover 2026-05-24
+  suspend: true    # SC-364 wind-down (2026-09-11): no repone stock automaticamente
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 200
   successfulJobsHistoryLimit: 3
