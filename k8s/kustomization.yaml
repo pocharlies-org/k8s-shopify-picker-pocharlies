@@ -6,7 +6,7 @@ namespace: skirmshop
 # Internal admin tool (not Shopify-embedded): bespoke routing + Keycloak SSO.
 # Uses explicit names (no namePrefix) because routing is hand-written.
 resources:
-  - https://github.com/pocharlies/k8s-shopify-framework-pocharlies.git//base?ref=deploy/prod
+  - https://github.com/pocharlies-org/k8s-shopify-framework-pocharlies.git//base?ref=deploy/prod
   - routing.yaml
   - cronjobs.yaml
   - externalsecret-ga4.yaml
