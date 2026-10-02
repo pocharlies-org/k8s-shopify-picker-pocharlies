@@ -1,5 +1,5 @@
 # Scheduled jobs migrated off sauvage's `ubuntu` crontab (cron-wrapper.sh picklist_close /
-# purchase_recommend). Reuse the picker image (kustomize images: rewrites shopify-app) +
+# purchase_recommend; the latter was removed on 2026-10-03). Reuse the picker image (kustomize images: rewrites shopify-app) +
 # picker-secrets. This repo uses explicit names (no namePrefix), so names carry a picker- prefix.
 apiVersion: batch/v1
 kind: CronJob
@@ -62,7 +62,8 @@ spec:
 # /api/manufacturers/signals (durable Postgres ProductSignal). NO --apply / no
 # --create-po, so it creates ZERO purchase orders. The ficha reads ProductSignal
 # via Prisma (join productcode_supplier == manufacturerSku).
-# (The Monday picker-purchase-recommend job is the one that actually applies POs.)
+# (Nothing applies POs automatically: the Monday picker-purchase-recommend job was
+# removed on 2026-10-03; POs are only made on customer order.)
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -115,8 +116,8 @@ spec:
                 # Back-in-stock whitelist demand signal (token via picker-secrets ESO).
                 - { name: BACK_IN_STOCK_URL, value: "http://back-in-stock-app" }
                 # Shared Postgres run-state/config (picker schema): the daily signal run
-                # persists demand snapshots durably instead of pod-local SQLite, so the
-                # Monday recommend run can reuse them. Backend auto-selected by DATABASE_URL.
+                # persists demand snapshots durably instead of pod-local SQLite. Backend
+                # auto-selected by DATABASE_URL.
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
@@ -132,9 +133,9 @@ spec:
 # GA4 demand-signal refresh: pokes the picker server's existing
 # POST /api/purchase/ga4/refresh so the GA4 item-level metrics snapshot
 # (picker.demand_metrics_snapshots, source=ga4_data_api) is rebuilt daily into
-# shared Postgres. The Monday picker-purchase-recommend run reads the latest
-# ready snapshot (latest_demand_metrics_snapshot) → GA4 visits feed the
-# visits-gate. Runs at 03:30, before signals (04:00) and Monday recommend (06:00).
+# shared Postgres. The signals run reads the latest ready snapshot
+# (latest_demand_metrics_snapshot) → GA4 visits feed the visits-gate. Runs at
+# 03:30, before signals (04:00).
 # async=false → the Job waits until the refresh finishes (success == snapshot written).
 # Needs Postgres-shared so server + cron see the same snapshot (already wired).
 apiVersion: batch/v1
