@@ -1,5 +1,5 @@
 # Scheduled jobs migrated off sauvage's `ubuntu` crontab (cron-wrapper.sh picklist_close /
-# purchase_recommend). Reuse the picker image (kustomize images: rewrites shopify-app) +
+# purchase_recommend; the latter was removed on 2026-10-03). Reuse the picker image (kustomize images: rewrites shopify-app) +
 # picker-secrets. This repo uses explicit names (no namePrefix), so names carry a picker- prefix.
 apiVersion: batch/v1
 kind: CronJob
@@ -55,92 +55,6 @@ spec:
                 requests: { cpu: 50m, memory: 128Mi }
                 limits: { memory: 512Mi }
 ---
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: picker-purchase-recommend
-  labels:
-    app.kubernetes.io/component: cron
-    app.kubernetes.io/instance: picker
-spec:
-  schedule: "0 6 * * 1"          # was: purchase_recommend — Monday 06:00
-  timeZone: Europe/Madrid
-  # MIGRATION: runtime-verified OK (image has python3 + the scripts). Staged suspended;
-  # unsuspend at cutover AFTER removing the matching sauvage host cron line (avoid double-run).
-  suspend: true    # SC-364 wind-down (2026-09-11): no repone stock automaticamente
-  concurrencyPolicy: Forbid
-  startingDeadlineSeconds: 200
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 3
-  jobTemplate:
-    spec:
-      backoffLimit: 1
-      activeDeadlineSeconds: 7200
-      ttlSecondsAfterFinished: 604800
-      template:
-        spec:
-          restartPolicy: Never
-          imagePullSecrets:
-            - name: harbor-pull
-          nodeSelector:
-            role: edge
-            kubernetes.io/arch: amd64
-          tolerations:
-            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
-          containers:
-            - name: purchase-recommend
-              # Unified picker image (kustomization images: digest): current source
-              # WITH scripts/run-purchase-cron.sh + Postgres run-state backend.
-              # Supersedes the temporary bd97534 pin and the stale April overlay that
-              # caused the 2026-06-22 StartError (missing wrapper script).
-              image: shopify-app
-              workingDir: /app
-              command: ["scripts/run-purchase-cron.sh"]
-              envFrom:
-                - secretRef: { name: picker-secrets }
-              env:
-                - { name: NODE_ENV, value: "production" }
-                - name: BRAIN_API_KEY
-                  valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
-                # Synapse workflow fabric (engine + adapters incl. messaging/Hermes) still
-                # lives on sauvage user-systemd consuming from sauvage's docker rabbitmq.
-                # synapse-rmq is the in-cluster bridge Service that resolves to sauvage:5672.
-                - { name: AMQP_HOST, value: "synapse-rmq.databases.svc.cluster.local" }
-                - { name: AMQP_PORT, value: "5672" }
-                - { name: PURCHASE_RECOMMEND_TIMEOUT_SECONDS, value: "3600" }
-                - { name: PURCHASE_COMPARE_TIMEOUT_SECONDS, value: "2400" }
-                - { name: PURCHASE_REPORT_TIMEOUT_SECONDS, value: "600" }
-                # Weekly auto-apply (decision B reversed 2026-06-18 by the owner): the
-                # Monday run RECOMMENDS + COMPARES + APPLIES concept POs to Picqer
-                # automatically, then sends the report (WhatsApp/email). POs are CONCEPT
-                # (never sent to suppliers), so unattended auto-restock is the intended
-                # behaviour. Set PURCHASE_CRON_APPLY="0" to re-enable the human gate
-                # (review-only). concurrencyPolicy:Forbid still prevents self-overlap.
-                - { name: PURCHASE_CRON_APPLY, value: "1" }
-                - { name: PURCHASE_CRON_SEND_REPORT, value: "1" }
-                # Back-in-stock whitelist demand signal (token via picker-secrets ESO).
-                - { name: BACK_IN_STOCK_URL, value: "http://back-in-stock-app" }
-                - name: DB_USER
-                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
-                - name: DB_PASSWORD
-                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
-                # Mismo caso que el deployment: Python + psycopg 3, así que
-                # solo parámetros de libpq. `connection_limit` la tumba.
-                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connect_timeout=10&application_name=picker-cron" }
-              volumeMounts:
-                - name: synapse-credentials
-                  mountPath: /etc/synapse/credentials
-                  readOnly: true
-              terminationMessagePolicy: FallbackToLogsOnError
-              resources:
-                requests: { cpu: 100m, memory: 192Mi }
-                limits: { memory: 768Mi }
-          volumes:
-            - name: synapse-credentials
-              hostPath:
-                path: /etc/synapse/credentials
-                type: Directory
----
 # F4 signal-refresh: daily analyze-only run. Runs recommend-purchases.py DIRECTLY
 # in this dedicated Job pod (no serving-pod sqlite lock) and POSTs per-product
 # signals (stock/monthly_sales/margin/visits/backorders_es/whitelist_waiting/
@@ -148,7 +62,8 @@ spec:
 # /api/manufacturers/signals (durable Postgres ProductSignal). NO --apply / no
 # --create-po, so it creates ZERO purchase orders. The ficha reads ProductSignal
 # via Prisma (join productcode_supplier == manufacturerSku).
-# (The Monday picker-purchase-recommend job is the one that actually applies POs.)
+# (Nothing applies POs automatically: the Monday picker-purchase-recommend job was
+# removed on 2026-10-03; POs are only made on customer order.)
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -201,8 +116,8 @@ spec:
                 # Back-in-stock whitelist demand signal (token via picker-secrets ESO).
                 - { name: BACK_IN_STOCK_URL, value: "http://back-in-stock-app" }
                 # Shared Postgres run-state/config (picker schema): the daily signal run
-                # persists demand snapshots durably instead of pod-local SQLite, so the
-                # Monday recommend run can reuse them. Backend auto-selected by DATABASE_URL.
+                # persists demand snapshots durably instead of pod-local SQLite. Backend
+                # auto-selected by DATABASE_URL.
                 - name: DB_USER
                   valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
                 - name: DB_PASSWORD
@@ -218,9 +133,9 @@ spec:
 # GA4 demand-signal refresh: pokes the picker server's existing
 # POST /api/purchase/ga4/refresh so the GA4 item-level metrics snapshot
 # (picker.demand_metrics_snapshots, source=ga4_data_api) is rebuilt daily into
-# shared Postgres. The Monday picker-purchase-recommend run reads the latest
-# ready snapshot (latest_demand_metrics_snapshot) → GA4 visits feed the
-# visits-gate. Runs at 03:30, before signals (04:00) and Monday recommend (06:00).
+# shared Postgres. The signals run reads the latest ready snapshot
+# (latest_demand_metrics_snapshot) → GA4 visits feed the visits-gate. Runs at
+# 03:30, before signals (04:00).
 # async=false → the Job waits until the refresh finishes (success == snapshot written).
 # Needs Postgres-shared so server + cron see the same snapshot (already wired).
 apiVersion: batch/v1
