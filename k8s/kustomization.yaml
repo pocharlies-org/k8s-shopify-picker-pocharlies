@@ -24,10 +24,11 @@ images:
     # composite-itemId matching + real on-order + supplier minimum-order-value
     # flagging + Shopify-only paid/unfulfilled demand not yet in Picqer
     # + backorders covered by stock no longer counted as demand (PR #3)
-    # + read-only warehouse map API /api/warehouse/shelves for the panel (SKIRM-279, PR #8).
-    # Built from skirmshop-picqer@main 6fec565 (tag warehouse-6fec565). All picker
+    # + read-only warehouse map API /api/warehouse/shelves for the panel (SKIRM-279, PR #8)
+    # + /api/warehouse/conflicts for the panel's Conflictos section (SKIRM-287, PR #9).
+    # Built from skirmshop-picqer@main 95d9e61 (tag conflicts-95d9e61). All picker
     # workloads share this image.
-    digest: sha256:697ef28ea96079d1788c2367714c7aee0051722b701ba16a98d0039432b23cf2
+    digest: sha256:d029c183e6e837c7bd4a5b63a9f95d898da6e1e366ef08f4f12999fb9937a59d
 
 patches:
   - target: { kind: Deployment, name: app }
