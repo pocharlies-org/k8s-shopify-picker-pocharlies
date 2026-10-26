@@ -23,9 +23,11 @@ images:
     # Unified image: Postgres backend + MOQ/pack rounding + retention + GA4
     # composite-itemId matching + real on-order + supplier minimum-order-value
     # flagging + Shopify-only paid/unfulfilled demand not yet in Picqer
-    # + backorders covered by stock no longer counted as demand (PR #3).
-    # Built from skirmshop-picqer@main 77e4600. All picker workloads share this image.
-    digest: sha256:c34f4c156e75f17c4df96f01232a476926f1856877c2938e9fff32947262a311
+    # + backorders covered by stock no longer counted as demand (PR #3)
+    # + read-only warehouse map API /api/warehouse/shelves for the panel (SKIRM-279, PR #8).
+    # Built from skirmshop-picqer@main 6fec565 (tag warehouse-6fec565). All picker
+    # workloads share this image.
+    digest: sha256:697ef28ea96079d1788c2367714c7aee0051722b701ba16a98d0039432b23cf2
 
 patches:
   - target: { kind: Deployment, name: app }
