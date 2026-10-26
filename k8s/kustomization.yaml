@@ -26,10 +26,11 @@ images:
     # + backorders covered by stock no longer counted as demand (PR #3)
     # + read-only warehouse map API /api/warehouse/shelves for the panel (SKIRM-279, PR #8)
     # + /api/warehouse/conflicts for the panel's Conflictos section (SKIRM-287, PR #9)
-    # + /api/warehouse/product, where a product is right now (SKIRM-291, PR #10).
-    # Built from skirmshop-picqer@main 02b1039 (tag producto-02b1039). All picker
+    # + /api/warehouse/product, where a product is right now (SKIRM-291, PR #10)
+    # + POST /api/warehouse/move, a product from box to box in one call (SKIRM-289, PR #11).
+    # Built from skirmshop-picqer@main c0374a7 (tag mover-c0374a7). All picker
     # workloads share this image.
-    digest: sha256:b0c3cbc04139eb939217d30853acf7314ff60ade766a16923ec2dd50b77c27e8
+    digest: sha256:d2daa8453ceb72b7baea2996283e964c5094f172156074fe688d7e671ab2e731
 
 patches:
   - target: { kind: Deployment, name: app }
