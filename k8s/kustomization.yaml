@@ -29,9 +29,11 @@ images:
     # + /api/warehouse/product, where a product is right now (SKIRM-291, PR #10)
     # + POST /api/warehouse/move, a product from box to box in one call (SKIRM-289, PR #11)
     # + boxes_with_stock per shelf on /api/warehouse/shelves, background pass (SKIRM-313, PR #12).
-    # Built from skirmshop-picqer@main ec3a111 (tag 20261027-skirm313-ec3a111). All picker
+    # + a shelf read by the stock pass reports 0, not null, when nothing has stock (the plan dims it;
+    # SKIRM-313, PR #13).
+    # Built from skirmshop-picqer@main 505b30e (tag 20261027-skirm313fix-6b23b27). All picker
     # workloads share this image.
-    digest: sha256:5501de1e23b303a620acc162b32e4acff514b5214ba79c9d14999ee0040e6aba
+    digest: sha256:8b367da540386e4d1b8def37952293c0ba0d10ec74d866008f7b89892c85fbbd
 
 patches:
   - target: { kind: Deployment, name: app }
