@@ -34,9 +34,10 @@ images:
     # + POST /api/warehouse/move also moves the stock on «no specific location» into the box (SKIRM-321, PR #14).
     # + POST /api/warehouse/move links the box to a product that is nowhere and has no stock, not 422 sin_origen
     # (SKIRM-327, PR #15).
-    # Built from skirmshop-picqer@main 51b9508 (tag 20261028-skirm327-51b9508). All picker
+    # + GET /api/warehouse/supplier-code, the SP- products of a Picqer supplier code (SKIRM-326, PR #16).
+    # Built from skirmshop-picqer@main dbd17d1 (tag 20261028-skirm326-dbd17d1). All picker
     # workloads share this image.
-    digest: sha256:c331d0896a4ff9122eb422956c3b4dee6bdd6aac9a1b6b5763253be2923c1a79
+    digest: sha256:744a418d73148c7c48935fa41f8bb3ae702b5b93e968baed1b2ed7731571c5be
 
 patches:
   - target: { kind: Deployment, name: app }
