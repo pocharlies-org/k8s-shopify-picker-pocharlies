@@ -32,9 +32,11 @@ images:
     # + a shelf read by the stock pass reports 0, not null, when nothing has stock (the plan dims it;
     # SKIRM-313, PR #13).
     # + POST /api/warehouse/move also moves the stock on «no specific location» into the box (SKIRM-321, PR #14).
-    # Built from skirmshop-picqer@main c5fc38c (tag 20261028-skirm321-c5fc38c). All picker
+    # + POST /api/warehouse/move links the box to a product that is nowhere and has no stock, not 422 sin_origen
+    # (SKIRM-327, PR #15).
+    # Built from skirmshop-picqer@main 51b9508 (tag 20261028-skirm327-51b9508). All picker
     # workloads share this image.
-    digest: sha256:4ac4973c10d77202c3314e192540ad1fe8b1c07971b959e0499c887ea5cf2adb
+    digest: sha256:c331d0896a4ff9122eb422956c3b4dee6bdd6aac9a1b6b5763253be2923c1a79
 
 patches:
   - target: { kind: Deployment, name: app }
