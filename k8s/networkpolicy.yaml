@@ -1,0 +1,56 @@
+# SKIRM-293: el picker solo escucha a quien lo usa hoy. Sin esto, cualquier pod
+# del clúster puede mandarse sus propias cabeceras X-Auth-Request-Email /
+# X-Auth-Request-Groups y pasar la guarda de escritura del almacén
+# (server.py `_warehouse_write_actor`) sin pasar por SSO.
+# Llamadores medidos (29-10-2026):
+#   - Traefik edge (skirmshop.e-dani.com/picker y admin.skirmshop.es/picker,
+#     IngressRoutes de clase traefik-edge) y Traefik LAN (admin.lan.skirmshop.es/picker).
+#   - control-panel-bff (ns skirmshop): picker_url = skirmshop-picker.skirmshop.svc:80.
+#   - skirmshop-plugins-mcp / -admin (shim del gateway, ns skirmshop): su egress
+#     ya declara 3480 hacia este servicio (k8s-agentgateway-pocharlies).
+#   - CronJobs del propio picker (mismo ns, etiqueta app.kubernetes.io/instance: picker).
+# Selectores en matchExpressions a propósito: el transformer `labels` del
+# kustomization (includeSelectors: true) añade app.kubernetes.io/instance: picker
+# a los matchLabels y rompería los de los pods de Traefik.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: skirmshop-picker-allow-callers
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/name, operator: In, values: [shopify-app] }
+      - { key: app.kubernetes.io/instance, operator: In, values: [picker] }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        # Traefik edge: DaemonSet de ns traefik-edge (traefik-edge-traefik-edge)
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: [traefik-edge] }
+          podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/name, operator: In, values: [traefik] }
+              - { key: app.kubernetes.io/instance, operator: In, values: [traefik-edge-traefik-edge] }
+        # Traefik LAN: Deployment de ns traefik-lan (traefik-lan-traefik-lan)
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: [traefik-lan] }
+          podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/name, operator: In, values: [traefik] }
+              - { key: app.kubernetes.io/instance, operator: In, values: [traefik-lan-traefik-lan] }
+        # BFF del panel de control (mismo namespace)
+        - podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/name, operator: In, values: [control-panel-bff] }
+        # Shim de plugins del gateway (mismo namespace)
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [skirmshop-plugins-mcp, skirmshop-plugins-mcp-admin] }
+        # CronJobs del picker (y el propio pod del picker), mismo namespace
+        - podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/instance, operator: In, values: [picker] }
+      ports:
+        - { protocol: TCP, port: 3480 }
