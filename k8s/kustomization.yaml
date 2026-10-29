@@ -9,6 +9,7 @@ resources:
   - https://github.com/pocharlies-org/k8s-shopify-framework-pocharlies.git//base?ref=deploy/prod
   - routing.yaml
   - cronjobs.yaml
+  - networkpolicy.yaml
   - externalsecret-ga4.yaml
   - externalsecret-brain-feedback.yaml
 
