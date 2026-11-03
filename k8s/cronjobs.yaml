@@ -174,8 +174,14 @@ spec:
                   valueFrom: { secretKeyRef: { name: picker-secrets, key: PURCHASE_API_TOKEN } }
               command: ["sh", "-c"]
               args:
+                # SC-3846: kube-proxy en sauvage tuvo ventanas de ~8 min con vista
+                # obsoleta "sin endpoints" del Service (REJECT ICMP desde el VIP con
+                # el pod Ready). --retry-all-errors reintenta el rechazo de conexión
+                # (20×30 s) hasta que la vista se reconcilia; el POST sigue dentro
+                # de --max-time/activeDeadlineSeconds.
                 - >
-                  curl -fsS --max-time 780 -X POST
+                  curl -fsS --max-time 780 --retry 20 --retry-delay 30
+                  --retry-all-errors -X POST
                   -H "Authorization: Bearer $PURCHASE_API_TOKEN"
                   -H "Content-Type: application/json"
                   -d '{"async": false}'
