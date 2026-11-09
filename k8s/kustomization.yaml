@@ -36,9 +36,10 @@ images:
     # + POST /api/warehouse/move links the box to a product that is nowhere and has no stock, not 422 sin_origen
     # (SKIRM-327, PR #15).
     # + GET /api/warehouse/supplier-code, the SP- products of a Picqer supplier code (SKIRM-326, PR #16).
-    # Built from skirmshop-picqer@main dbd17d1 (tag 20261028-skirm326-dbd17d1). All picker
+    # + orders/cancelled now rolls back a picklist the hourly cron already closed (SKIRM-238, PR #18).
+    # Built from skirmshop-picqer@main bb368e8 (tag 20261109-skirm238-bb368e8). All picker
     # workloads share this image.
-    digest: sha256:744a418d73148c7c48935fa41f8bb3ae702b5b93e968baed1b2ed7731571c5be
+    digest: sha256:514cf6b886c5ae9e112f92717fbaee30f23636fcd686513f2b1b10276ec0264f
 
 patches:
   - target: { kind: Deployment, name: app }
