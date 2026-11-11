@@ -1,6 +1,7 @@
 # Bespoke routing for the picker admin tool. Names are explicit (this overlay
 # does not use namePrefix) so the Service/Middleware refs are unambiguous.
-# Keycloak SSO gates both routes.
+# Keycloak SSO gates the admin routes; /picker/webhooks is public — it is
+# called by Picqer and protected by its HMAC (PICQER_WEBHOOK_SECRET).
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -38,6 +39,15 @@ spec:
       middlewares:
         - { name: sso-chain, namespace: keycloak }
         - { name: picker-redirect-root }
+      services:
+        - { name: skirmshop-picker, port: 80 }
+    # SKIRM-458: Picqer posts receipts.completed here (no SSO session exists
+    # for it); the picker verifies X-Picqer-Signature and answers 401 otherwise.
+    - match: Host(`skirmshop.e-dani.com`) && PathPrefix(`/picker/webhooks`)
+      kind: Rule
+      priority: 200
+      middlewares:
+        - { name: picker-strip }
       services:
         - { name: skirmshop-picker, port: 80 }
     - match: Host(`skirmshop.e-dani.com`) && PathPrefix(`/picker`)
