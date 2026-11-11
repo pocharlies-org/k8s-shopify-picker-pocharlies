@@ -52,5 +52,15 @@ spec:
         - podSelector:
             matchExpressions:
               - { key: app.kubernetes.io/instance, operator: In, values: [picker] }
+        # SKIRM-458 (11-11-2026): el DaemonSet de Traefik edge es hostNetwork — su
+        # tráfico sale con la IP del nodo, que ningún podSelector cubre, y desde los
+        # nodos cp (no local al pod del picker) el netpol lo cortaba: el webhook de
+        # Picqer daba 502 en 3 de cada 4 réplicas. IP de los 4 nodos donde corre el
+        # DaemonSet (kubectl get pods -n traefik-edge -o wide); si el DaemonSet gana
+        # nodos, añadirlos aquí.
+        - ipBlock: { cidr: 100.109.183.9/32 }   # sauvage
+        - ipBlock: { cidr: 100.107.21.89/32 }   # ks5-cp-1
+        - ipBlock: { cidr: 100.71.117.127/32 }  # ks5-cp-2
+        - ipBlock: { cidr: 100.75.189.75/32 }   # ks5-cp-3
       ports:
         - { protocol: TCP, port: 3480 }
