@@ -37,9 +37,11 @@ images:
     # (SKIRM-327, PR #15).
     # + GET /api/warehouse/supplier-code, the SP- products of a Picqer supplier code (SKIRM-326, PR #16).
     # + orders/cancelled now rolls back a picklist the hourly cron already closed (SKIRM-238, PR #18).
-    # Built from skirmshop-picqer@main bb368e8 (tag 20261109-skirm238-bb368e8). All picker
+    # + POST /webhooks/picqer/receipts: on-hold arrival notice (email info@ + Gmail drafts) and
+    # GET /api/purchase/purchase-orders for the panel's «En espera» (SKIRM-458, PR #20).
+    # Built from skirmshop-picqer@main 2e82217 (tag 20261111-skirm458-2e82217). All picker
     # workloads share this image.
-    digest: sha256:514cf6b886c5ae9e112f92717fbaee30f23636fcd686513f2b1b10276ec0264f
+    digest: sha256:7e08d460ca512515f1c6bfa41009e61a067cf4730741e843a386b8fa69ee5628
 
 patches:
   - target: { kind: Deployment, name: app }
