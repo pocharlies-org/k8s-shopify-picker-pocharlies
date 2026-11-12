@@ -64,6 +64,10 @@ patches:
                   - { name: SCOPES, value: "read_products,read_inventory,read_orders,read_reports" }
                   - name: BRAIN_API_KEY
                     valueFrom: { secretKeyRef: { name: picker-brain-feedback-secrets, key: BRAIN_API_KEY } }
+                  # RabbitMQ de Synapse: el bridge in-cluster que resuelve a sauvage:5672
+                  # (igual que en cronjobs.yaml). Sin esto, synapse_message/synapse_publish
+                  # caen al default 127.0.0.1 y el aviso de llegada no publica (SKIRM-458).
+                  - { name: AMQP_HOST, value: "synapse-rmq.databases.svc.cluster.local" }
                   # Shared Postgres run-state/config (picker schema): server.py shares
                   # purchase runs/config/snapshots with the cron jobs instead of
                   # ephemeral pod-local SQLite. Backend auto-selected by DATABASE_URL.
