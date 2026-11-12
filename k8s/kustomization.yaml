@@ -82,6 +82,20 @@ patches:
                   - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connect_timeout=10&application_name=skirmshop-picker" }
                 envFrom:
                   - secretRef: { name: picker-secrets }
+                # SKIRM-458: el aviso de llegada (POST /webhooks/picqer/receipts) publica en
+                # RabbitMQ con synapse_message, que lee skirmshop_picker.rmq.password de
+                # /etc/synapse/credentials. Mismo hostPath que el cron de señales de arriba
+                # (los archivos los reparte la sync de IT al nodo); sin esto el webhook
+                # contestaba 200 pero el email y los borradores no salían.
+                volumeMounts:
+                  - name: synapse-credentials
+                    mountPath: /etc/synapse/credentials
+                    readOnly: true
+            volumes:
+              - name: synapse-credentials
+                hostPath:
+                  path: /etc/synapse/credentials
+                  type: Directory
             imagePullSecrets:
               - name: harbor-pull
   - target: { group: apps, version: v1, kind: Deployment, name: app }
