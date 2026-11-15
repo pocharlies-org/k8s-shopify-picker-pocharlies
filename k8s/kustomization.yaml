@@ -43,7 +43,7 @@ images:
     # mandatory reason kept as Picqer's comment (SKIRM-466, PR #22).
     # Built from skirmshop-picqer@main 5d730ef (tag 20261112-skirm466-5d730ef). All picker
     # workloads share this image.
-    digest: sha256:608bdfd810f0c12555306529e679ea884b8996b0fa6a71ecfcfd25c1e51e1b31
+    digest: sha256:05dcdae252dbcb13ce60d7b8ae70bc2b7efaa810ab6a6c99d405c57b130bc7d2
 
 patches:
   - target: { kind: Deployment, name: app }
