@@ -39,13 +39,15 @@ images:
     # + orders/cancelled now rolls back a picklist the hourly cron already closed (SKIRM-238, PR #18).
     # + POST /webhooks/picqer/receipts: on-hold arrival notice (email info@ + Gmail drafts) and
     # GET /api/purchase/purchase-orders for the panel's «En espera» (SKIRM-458, PR #20).
+    # + the receipt notice no longer drafts customer emails — a partial receipt shipped premature
+    # «tu pieza ha llegado» drafts; the notice rides on the stock-gate release now (SKIRM-499, PR #25).
     # + POST /api/warehouse/stock, a location's stock corrected to the units there with a
     # mandatory reason kept as Picqer's comment (SKIRM-466, PR #22).
     # + products tagged stock-clearance or no-reponer in Shopify ES are never recommended
     # (SKIRM-492, PR #24).
-    # Built from skirmshop-picqer@main 0d585d2 (tag 20261116-skirm492-0d585d2). All picker
+    # Built from skirmshop-picqer@main d958cec (tag 20261116-skirm499-d958cec). All picker
     # workloads share this image.
-    digest: sha256:a03811bfa4565d55005ab8ce44bfd7bcc7d1c27479e1669d527ac4b3f370edf3
+    digest: sha256:326139abcb7a17c28e7261a7d7af1e764a122d0cf13524c50f61a2f5f87f3ba9
 
 patches:
   - target: { kind: Deployment, name: app }
