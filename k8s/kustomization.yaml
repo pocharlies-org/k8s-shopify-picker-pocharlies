@@ -41,9 +41,11 @@ images:
     # GET /api/purchase/purchase-orders for the panel's «En espera» (SKIRM-458, PR #20).
     # + POST /api/warehouse/stock, a location's stock corrected to the units there with a
     # mandatory reason kept as Picqer's comment (SKIRM-466, PR #22).
-    # Built from skirmshop-picqer@main 5d730ef (tag 20261112-skirm466-5d730ef). All picker
+    # + products tagged stock-clearance or no-reponer in Shopify ES are never recommended
+    # (SKIRM-492, PR #24).
+    # Built from skirmshop-picqer@main 0d585d2 (tag 20261116-skirm492-0d585d2). All picker
     # workloads share this image.
-    digest: sha256:05dcdae252dbcb13ce60d7b8ae70bc2b7efaa810ab6a6c99d405c57b130bc7d2
+    digest: sha256:a03811bfa4565d55005ab8ce44bfd7bcc7d1c27479e1669d527ac4b3f370edf3
 
 patches:
   - target: { kind: Deployment, name: app }
