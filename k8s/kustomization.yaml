@@ -45,9 +45,11 @@ images:
     # mandatory reason kept as Picqer's comment (SKIRM-466, PR #22).
     # + products tagged stock-clearance or no-reponer in Shopify ES are never recommended
     # (SKIRM-492, PR #24).
-    # Built from skirmshop-picqer@main d958cec (tag 20261116-skirm499-d958cec). All picker
-    # workloads share this image.
-    digest: sha256:326139abcb7a17c28e7261a7d7af1e764a122d0cf13524c50f61a2f5f87f3ba9
+    # + the receipt notice's subject shows the PO's purchaseorderid — Picqer sends purchaseorder
+    # as an object and the subject carried the whole dict (SKIRM-499, PR #26).
+    # Built from skirmshop-picqer@main 4624a03 (no tag; built by hand on x86, tag 20261116-skirm499-2).
+    # All picker workloads share this image.
+    digest: sha256:4c20f20d7c024df0be91b0fced8e19fe544418bdf29f580ce06cc4ff1cd3acc3
 
 patches:
   - target: { kind: Deployment, name: app }
