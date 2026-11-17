@@ -47,9 +47,13 @@ images:
     # (SKIRM-492, PR #24).
     # + the receipt notice's subject shows the PO's purchaseorderid — Picqer sends purchaseorder
     # as an object and the subject carried the whole dict (SKIRM-499, PR #26).
-    # Built from skirmshop-picqer@main 4624a03 (no tag; built by hand on x86, tag 20261116-skirm499-2).
+    # + recommend-purchases no longer calls the Brain (SC-5827, PR #27).
+    # + the Telegram «✅ Publicar» button publishes product-creator.skirmshop.approve_run, which starts
+    # Synapse's approve workflow; the old approve_requested command was dropped as workflow_missing
+    # (SKIRM-506, PR #28).
+    # Built from skirmshop-picqer@main dc02b8b (no tag; built by hand on x86, tag 20261117-skirm506-dc02b8b).
     # All picker workloads share this image.
-    digest: sha256:4c20f20d7c024df0be91b0fced8e19fe544418bdf29f580ce06cc4ff1cd3acc3
+    digest: sha256:d31a1076a094b4d5d2d6f2416b9c0525d8a416b67c03bc997597c71583c32c5e
 
 patches:
   - target: { kind: Deployment, name: app }
