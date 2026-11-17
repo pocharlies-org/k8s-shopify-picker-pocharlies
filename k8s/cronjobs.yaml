@@ -9,7 +9,10 @@ metadata:
     app.kubernetes.io/component: cron
     app.kubernetes.io/instance: picker
 spec:
-  schedule: "0 * * * *"          # was: picklist_close — hourly
+  # SC-5879 (B2a de SC-5806): cada picklist nueva de ES la cierra al llegar el webhook
+  # picklists.created del picker (POST /webhooks/picqer/picklists). Esto es solo la red
+  # por si Picqer pierde una entrega (C-1, mientras Dani decide en SC-5806).
+  schedule: "15 */4 * * *"
   timeZone: Europe/Madrid
   # MIGRATION: runtime-verified OK (image has python3 + the scripts). Staged suspended;
   # unsuspend at cutover AFTER removing the matching sauvage host cron line (avoid double-run).
