@@ -36,7 +36,7 @@ images:
     # + POST /api/warehouse/move links the box to a product that is nowhere and has no stock, not 422 sin_origen
     # (SKIRM-327, PR #15).
     # + GET /api/warehouse/supplier-code, the SP- products of a Picqer supplier code (SKIRM-326, PR #16).
-    # + orders/cancelled now rolls back a picklist the hourly cron already closed (SKIRM-238, PR #18).
+    # + orders/cancelled now rolls back a picklist already closed (SKIRM-238, PR #18).
     # + POST /webhooks/picqer/receipts: on-hold arrival notice (email info@ + Gmail drafts) and
     # GET /api/purchase/purchase-orders for the panel's «En espera» (SKIRM-458, PR #20).
     # + the receipt notice no longer drafts customer emails — a partial receipt shipped premature
@@ -51,9 +51,11 @@ images:
     # + the Telegram «✅ Publicar» button publishes product-creator.skirmshop.approve_run, which starts
     # Synapse's approve workflow; the old approve_requested command was dropped as workflow_missing
     # (SKIRM-506, PR #28).
-    # Built from skirmshop-picqer@main dc02b8b (no tag; built by hand on x86, tag 20261117-skirm506-dc02b8b).
+    # + POST /webhooks/picqer/picklists closes each new ES picklist when Picqer's picklists.created
+    # arrives, instead of waiting for picker-picklist-close (SC-5879, PR #29).
+    # Built from skirmshop-picqer@main 8b5ff36 (no tag; built by hand on x86, tag 20261117-sc5879-8b5ff36).
     # All picker workloads share this image.
-    digest: sha256:d31a1076a094b4d5d2d6f2416b9c0525d8a416b67c03bc997597c71583c32c5e
+    digest: sha256:9e93a21eb5a0a62c62670f5f1b35cb674ebc5ec63c2937fe363fef524e9c7ce6
 
 patches:
   - target: { kind: Deployment, name: app }
