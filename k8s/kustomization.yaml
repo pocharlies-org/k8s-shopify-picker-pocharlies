@@ -62,7 +62,10 @@ images:
     # texto; la lectura de los ON_HOLD (held_orders) es común con el aviso de receipt, que no cambia.
     # + skirmshop-picqer@d6f010c (SKIRM-521, PR #36): la sección de vencidos va arriba del WhatsApp, antes
     # del detalle de POs: el mensaje se corta a 3500 caracteres por el final y al lunes normal se la comía.
-    digest: sha256:fb5af77062c9af431ddf5c3b6d187c6defe3ba49db2b109c69a7aa3061ff156b
+    # + skirmshop-picqer@8fd2cda (SKIRM-537, PR #37): GET /api/warehouse/backorders lee en paralelo (páginas de
+    # /backorders y /purchaseorders en olas, pedidos y stocks en un pool: ~15 s -> ~3 s) y cada línea trae las
+    # purchase orders de su SKU; las rutas de una línea y de liberar no escanean POs.
+    digest: sha256:08fcb367cd57ec70d048371290b8a368c12f4dd51d6a96044a4f702852cb2a32
 
 patches:
   - target: { kind: Deployment, name: app }
