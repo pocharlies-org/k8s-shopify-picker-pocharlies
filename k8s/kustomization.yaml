@@ -54,9 +54,8 @@ images:
     # arrives, instead of waiting for picker-picklist-close (SC-5879, PR #29).
     # + POST /webhooks/picqer/products publishes picqer.skirmshop.product.changed and a shelf move publishes
     # picqer.skirmshop.product.moved, so price and warehouse sync run per product (SC-5887/SC-5888, PR #30).
-    # Built from skirmshop-picqer@main b387fd0 (no tag; built by hand on x86, tag 20261117-sc5887-b387fd0).
-    # All picker workloads share this image.
-    digest: sha256:252b90efcd2ffbc50139486451c5dd4dcd59e4bf7affab091e1838579d0c99b8
+    # SKIRM-533: cutover image ce8e0a6; both legacy webhooks ACK without touching Picqer.
+    digest: sha256:5bb8aa3ae0dfd3537631a914e4abbd0457751e146e553d21e1a37032317acee8
 
 patches:
   - target: { kind: Deployment, name: app }
