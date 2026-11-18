@@ -19,8 +19,12 @@ spec:
         - name: consumer
           image: harbor.e-dani.com/homelab/skirmshop-picker@sha256:d4c2abb4adedd02c30a12eaf9afd29cba47ae0435338f7f0a3ff35bc0bbcc117
           command: [python3, fulfillment_consumer.py]
-          envFrom: [{secretRef: {name: picker-secrets}}]
           env:
+            - name: SHOPIFY_ACCESS_TOKEN
+              valueFrom: {secretKeyRef: {name: picker-secrets, key: SHOPIFY_ACCESS_TOKEN}}
+            - name: PICQER_API_KEY
+              valueFrom: {secretKeyRef: {name: picker-secrets, key: PICQER_API_KEY}}
+            - {name: PICQER_SUBDOMAIN, value: skirmshop}
             - {name: NATS_URL, value: 'nats://labels-nats-cluster:4222'}
             # First sequence after verified removal of both legacy writers (SKIRM-533).
             - {name: FIRST_STREAM_SEQUENCE, value: '82624'}
