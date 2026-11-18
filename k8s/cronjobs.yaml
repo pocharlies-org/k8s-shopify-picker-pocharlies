@@ -1,61 +1,9 @@
-# Scheduled jobs migrated off sauvage's `ubuntu` crontab (cron-wrapper.sh picklist_close /
-# purchase_recommend). Reuse the picker image (kustomize images: rewrites shopify-app) +
-# picker-secrets. This repo uses explicit names (no namePrefix), so names carry a picker- prefix.
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: picker-picklist-close
-  labels:
-    app.kubernetes.io/component: cron
-    app.kubernetes.io/instance: picker
-spec:
-  # SC-5879 (B2a de SC-5806): cada picklist nueva de ES la cierra al llegar el webhook
-  # picklists.created del picker (POST /webhooks/picqer/picklists). Esto es solo la red
-  # por si Picqer pierde una entrega (C-1, mientras Dani decide en SC-5806).
-  schedule: "15 */4 * * *"
-  timeZone: Europe/Madrid
-  # MIGRATION: runtime-verified OK (image has python3 + the scripts). Staged suspended;
-  # unsuspend at cutover AFTER removing the matching sauvage host cron line (avoid double-run).
-  suspend: false   # ACTIVE — sauvage host cron line removed at cutover 2026-05-24
-  concurrencyPolicy: Forbid
-  startingDeadlineSeconds: 200
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 3
-  jobTemplate:
-    spec:
-      backoffLimit: 1
-      activeDeadlineSeconds: 900
-      ttlSecondsAfterFinished: 86400
-      template:
-        spec:
-          restartPolicy: Never
-          imagePullSecrets:
-            - name: harbor-pull
-          nodeSelector:
-            role: edge
-            kubernetes.io/arch: amd64
-          tolerations:
-            - { key: role, operator: Equal, value: edge, effect: NoSchedule }
-          containers:
-            - name: picklist-close
-              image: shopify-app          # rewritten by overlay images: → skirmshop-picker
-              workingDir: /app
-              command: ["python3", "scripts/close-picklists.py"]
-              envFrom:
-                - secretRef: { name: picker-secrets }
-              env:
-                - { name: NODE_ENV, value: "production" }
-                - name: DB_USER
-                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: username } }
-                - name: DB_PASSWORD
-                  valueFrom: { secretKeyRef: { name: shared-postgres-app, key: password } }
-                # Mismo caso que el deployment: Python + psycopg 3, así que
-                # solo parámetros de libpq. `connection_limit` la tumba.
-                - { name: DATABASE_URL, value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-shared-rw.databases.svc.cluster.local:5432/skirmshop?connect_timeout=10&application_name=picker-cron" }
-              resources:
-                requests: { cpu: 50m, memory: 128Mi }
-                limits: { memory: 512Mi }
----
+# Scheduled jobs migrated off sauvage's `ubuntu` crontab (purchase_recommend). Reuse the
+# picker image (kustomize images: rewrites shopify-app) + picker-secrets. This repo uses
+# explicit names (no namePrefix), so names carry a picker- prefix.
+# SKIRM-533 (18-11-2026): `picker-picklist-close` (close-picklists.py, cada 4 h) retirado
+# aquí — el cierre indiscriminado deja de existir; lo sustituye el reflejo del fulfillment
+# real (consumidor SKIRM-533 en skirmshop-picqer).
 apiVersion: batch/v1
 kind: CronJob
 metadata:
