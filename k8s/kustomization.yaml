@@ -60,7 +60,9 @@ images:
     # «Campañas vencidas sin pedir» — pedidos de preventa/fábrica retenidos que pasaron el plazo de su tag
     # y cuyo SKU no tiene ninguna PO pedida en Picqer (concept/cancelled no cuentan), en WhatsApp, HTML y
     # texto; la lectura de los ON_HOLD (held_orders) es común con el aviso de receipt, que no cambia.
-    digest: sha256:9148f6484bc79af1d89f0f51840dc2105dac61d626b8ed000f0b7d80cba3be8c
+    # + skirmshop-picqer@d6f010c (SKIRM-521, PR #36): la sección de vencidos va arriba del WhatsApp, antes
+    # del detalle de POs: el mensaje se corta a 3500 caracteres por el final y al lunes normal se la comía.
+    digest: sha256:fb5af77062c9af431ddf5c3b6d187c6defe3ba49db2b109c69a7aa3061ff156b
 
 patches:
   - target: { kind: Deployment, name: app }
