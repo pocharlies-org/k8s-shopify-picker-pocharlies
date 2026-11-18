@@ -17,7 +17,7 @@ spec:
       tolerations: [{key: role, operator: Equal, value: edge, effect: NoSchedule}]
       containers:
         - name: consumer
-          image: harbor.e-dani.com/homelab/skirmshop-picker@sha256:d4c2abb4adedd02c30a12eaf9afd29cba47ae0435338f7f0a3ff35bc0bbcc117
+          image: harbor.e-dani.com/homelab/skirmshop-picker@sha256:be23ccda5c68326bdde7ffe3cb4e1c5b390d690f9052801be81b989cb06f9063
           command: [python3, fulfillment_consumer.py]
           env:
             - name: SHOPIFY_ACCESS_TOKEN
