@@ -56,7 +56,11 @@ images:
     # + POST /webhooks/picqer/products publishes picqer.skirmshop.product.changed and a shelf move publishes
     # picqer.skirmshop.product.moved, so price and warehouse sync run per product (SC-5887/SC-5888, PR #30).
     # SKIRM-533: cutover image ce8e0a6; both legacy webhooks ACK without touching Picqer.
-    digest: sha256:5bb8aa3ae0dfd3537631a914e4abbd0457751e146e553d21e1a37032317acee8
+    # + skirmshop-picqer@b04e43d (SKIRM-521, PR #35): el informe semanal de compras trae la sección
+    # «Campañas vencidas sin pedir» — pedidos de preventa/fábrica retenidos que pasaron el plazo de su tag
+    # y cuyo SKU no tiene ninguna PO pedida en Picqer (concept/cancelled no cuentan), en WhatsApp, HTML y
+    # texto; la lectura de los ON_HOLD (held_orders) es común con el aviso de receipt, que no cambia.
+    digest: sha256:9148f6484bc79af1d89f0f51840dc2105dac61d626b8ed000f0b7d80cba3be8c
 
 patches:
   - target: { kind: Deployment, name: app }
