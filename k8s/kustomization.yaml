@@ -65,7 +65,10 @@ images:
     # + skirmshop-picqer@8fd2cda (SKIRM-537, PR #37): GET /api/warehouse/backorders lee en paralelo (páginas de
     # /backorders y /purchaseorders en olas, pedidos y stocks en un pool: ~15 s -> ~3 s) y cada línea trae las
     # purchase orders de su SKU; las rutas de una línea y de liberar no escanean POs.
-    digest: sha256:08fcb367cd57ec70d048371290b8a368c12f4dd51d6a96044a4f702852cb2a32
+    # + skirmshop-picqer@1d6ccda (SKIRM-551, PR #38): POST /api/warehouse/stock sin idlocation corrige el total
+    # del producto en el almacén (el stock que ninguna ubicación tiene, p. ej. un reintegro) y
+    # GET /api/warehouse/product añade sin_ubicacion cuando el producto no tiene ninguna ubicación.
+    digest: sha256:e6b1ee74e9e05c7fbdf7fd5ed1d7c77929e714d1654837ac6ced00235d534911
 
 patches:
   - target: { kind: Deployment, name: app }
