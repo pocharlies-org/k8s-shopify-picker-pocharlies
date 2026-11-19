@@ -68,7 +68,9 @@ images:
     # + skirmshop-picqer@1d6ccda (SKIRM-551, PR #38): POST /api/warehouse/stock sin idlocation corrige el total
     # del producto en el almacén (el stock que ninguna ubicación tiene, p. ej. un reintegro) y
     # GET /api/warehouse/product añade sin_ubicacion cuando el producto no tiene ninguna ubicación.
-    digest: sha256:e6b1ee74e9e05c7fbdf7fd5ed1d7c77929e714d1654837ac6ced00235d534911
+    # 1f0f6e8 (SKIRM-551, PR #39): la corrección sin idlocation lee el total con product_es_stock;
+    # fetch_product_stock devuelve una lista y respondía 502 picqer.
+    digest: sha256:a721b023f337cd5cdb6b03898f13f830f86dda8257594ec86dea2ecd28d20a7a
 
 patches:
   - target: { kind: Deployment, name: app }
