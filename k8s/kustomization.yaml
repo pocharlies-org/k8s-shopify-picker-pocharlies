@@ -70,7 +70,10 @@ images:
     # GET /api/warehouse/product añade sin_ubicacion cuando el producto no tiene ninguna ubicación.
     # 1f0f6e8 (SKIRM-551, PR #39): la corrección sin idlocation lee el total con product_es_stock;
     # fetch_product_stock devuelve una lista y respondía 502 picqer.
-    digest: sha256:a721b023f337cd5cdb6b03898f13f830f86dda8257594ec86dea2ecd28d20a7a
+    # + skirmshop-picqer@7200f18 (SKIRM-558, PR #40): POST /api/warehouse/move crea una caja en una altura
+    # nueva de una estantería que ya existe («D4, 11» con solo D1–D3); la letra desconocida sigue en 422.
+    # Tag 20261120-skirm558-7200f18.
+    digest: sha256:17e1d8ad028d4a3fd2ea7f12bc542fc4bd322f608ec8572471a999cf1a6f823d
 
 patches:
   - target: { kind: Deployment, name: app }
