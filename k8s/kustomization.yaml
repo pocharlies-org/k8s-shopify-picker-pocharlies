@@ -85,8 +85,10 @@ images:
 # + skirmshop-picqer@8b04a46 (SKIRM-563, PR #43): GET /api/warehouse/backorders acepta ?warehouse=<id>
     # (7530 Skirmshop ES por defecto; 6796 NL, 7262 Irlanda, 11031 USA, solo lectura) y las cifras de stock
     # son las de esa tienda; las demás no llevan purchase orders.
-    # Tag 20261120-skirm563-8b04a46; el digest es su manifiesto linux/amd64, no el de atestación (PR #53).
-    digest: sha256:123c33401310c65b8efc5792a17736e63a9965a72b57af162f74392c79311b41
+    # + skirmshop-picqer@cf5f1dc (SKIRM-563, PR #44): un pedido que Picqer sigue limitando (429) tras los
+    # reintentos deja su línea sin referencia y la lista se sirve; USA Skirmshop (~1,7k líneas) ya no da 502.
+    # Tag 20261120-skirm563-cf5f1dc; el digest es su manifiesto linux/amd64, no el de atestación (PR #53).
+    digest: sha256:3ac84419356e3b85589e9d051653798bc8a977466c34e9c0c5f247397aa3a297
 
 patches:
   - target: { kind: Deployment, name: app }
