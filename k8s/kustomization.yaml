@@ -73,7 +73,11 @@ images:
     # + skirmshop-picqer@7200f18 (SKIRM-558, PR #40): POST /api/warehouse/move crea una caja en una altura
     # nueva de una estantería que ya existe («D4, 11» con solo D1–D3); la letra desconocida sigue en 422.
     # Tag 20261120-skirm558-7200f18.
-    digest: sha256:17e1d8ad028d4a3fd2ea7f12bc542fc4bd322f608ec8572471a999cf1a6f823d
+    # + skirmshop-picqer@ef74564 (SKIRM-561, PR #41): cada movimiento y cada corrección de stock hechos desde
+    # Ubicaciones dejan un comentario en el producto de Picqer (actor, origen -> destino, unidades; la corrección
+    # con su motivo); si Picqer no lo guarda, aviso en `avisos` y el cambio queda hecho.
+    # Tag 20261120-skirm561-ef74564.
+    digest: sha256:e6c75af6173823d2547bd5e67b9c25f7f90ba08511b4b7974b5b330771425838
 
 patches:
   - target: { kind: Deployment, name: app }
