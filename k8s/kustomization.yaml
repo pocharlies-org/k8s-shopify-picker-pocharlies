@@ -77,7 +77,6 @@ images:
     # Ubicaciones dejan un comentario en el producto de Picqer (actor, origen -> destino, unidades; la corrección
     # con su motivo); si Picqer no lo guarda, aviso en `avisos` y el cambio queda hecho.
     # Tag 20261120-skirm561-ef74564.
-    digest: sha256:e6c75af6173823d2547bd5e67b9c25f7f90ba08511b4b7974b5b330771425838
     # + skirmshop-picqer@e467376 (SKIRM-562, PR #42): POST /api/warehouse/move-box mueve una caja entera a otra
     # (un move() por producto con stock, lo que no se puede mover vuelve en `fallidos` y el resto sigue); por cada
     # producto movido publica picqer.skirmshop.product.moved. Trae también el comentario por movimiento en el
