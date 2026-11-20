@@ -82,7 +82,7 @@ images:
     # producto movido publica picqer.skirmshop.product.moved. Trae también el comentario por movimiento en el
     # producto (SKIRM-561, PR #41).
     # Tag 20261120-skirm562-e467376.
-    digest: sha256:a87bec380383a4c5574ffa2a168fa41d6ada10b8969514f01f36baccecc8235d
+    digest: sha256:c8b2137903418042f8452594af6d91eaaca1b17b4ccf8c928cf6d9b0a76a0820
 
 patches:
   - target: { kind: Deployment, name: app }
