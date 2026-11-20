@@ -82,7 +82,11 @@ images:
     # producto movido publica picqer.skirmshop.product.moved. Trae también el comentario por movimiento en el
     # producto (SKIRM-561, PR #41).
     # Tag 20261120-skirm562-e467376.
-    digest: sha256:a87bec380383a4c5574ffa2a168fa41d6ada10b8969514f01f36baccecc8235d
+    # + skirmshop-picqer@8b04a46 (SKIRM-563, PR #43): GET /api/warehouse/backorders acepta ?warehouse=<id>
+    # (7530 Skirmshop ES por defecto; 6796 NL, 7262 Irlanda, 11031 USA, solo lectura) y las cifras de stock
+    # son las de esa tienda; las demás no llevan purchase orders.
+    # Tag 20261120-skirm563-8b04a46.
+    digest: sha256:6fa30998b7f2acb311d00ec1775283f1d6ceddbd92c1213db73dc59746e9c418
 
 patches:
   - target: { kind: Deployment, name: app }
