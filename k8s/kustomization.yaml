@@ -87,8 +87,11 @@ images:
     # son las de esa tienda; las demás no llevan purchase orders.
     # + skirmshop-picqer@cf5f1dc (SKIRM-563, PR #44): un pedido que Picqer sigue limitando (429) tras los
     # reintentos deja su línea sin referencia y la lista se sirve; USA Skirmshop (~1,7k líneas) ya no da 502.
-    # Tag 20261120-skirm563-cf5f1dc; el digest es su manifiesto linux/amd64, no el de atestación (PR #53).
-    digest: sha256:3ac84419356e3b85589e9d051653798bc8a977466c34e9c0c5f247397aa3a297
+    # + skirmshop-picqer@83c4da1 (SC-6393, PR #45): product_changed publica el productcode como
+    # string; Picqer lo devolvía a veces como número JSON y el motor rechazaba SOLO (invalid params
+    # — string_type, 9 fallos en 7 días, alerta Keep SYNW-20460/20420).
+    # Tag 20261123-sc6393-83c4da1; el digest es su manifiesto linux/amd64, no el de atestación (PR #53).
+    digest: sha256:6eaf6599a0cc5a30a5b5deb5b41e6c75120597f0bfd2a58030f1bb42288cf670
 
 patches:
   - target: { kind: Deployment, name: app }
