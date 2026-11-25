@@ -9,6 +9,7 @@
 #   - skirmshop-plugins-mcp / -admin (shim del gateway, ns skirmshop): su egress
 #     ya declara 3480 hacia este servicio (k8s-agentgateway-pocharlies).
 #   - CronJobs del propio picker (mismo ns, etiqueta app.kubernetes.io/instance: picker).
+#   - back-in-stock-app (ns skirmshop, SKIRM-651): pedido a fábrica retenido sin PO.
 # Selectores en matchExpressions a propósito: el transformer `labels` del
 # kustomization (includeSelectors: true) añade app.kubernetes.io/instance: picker
 # a los matchLabels y rompería los de los pods de Traefik.
@@ -44,6 +45,11 @@ spec:
         - podSelector:
             matchExpressions:
               - { key: app.kubernetes.io/name, operator: In, values: [control-panel-bff] }
+        # back-in-stock (mismo namespace): su tick de preorders pregunta qué PO
+        # cubren los SKU de un pedido a fábrica retenido (SKIRM-651).
+        - podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/name, operator: In, values: [back-in-stock-app] }
         # Shim de plugins del gateway (mismo namespace)
         - podSelector:
             matchExpressions:
