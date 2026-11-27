@@ -99,7 +99,10 @@ images:
     # + skirmshop-picqer@3565e25 (SKIRM-698, PR #47): la recepción acepta `nota` (comentario de la PO; sin líneas,
     # solo la nota) y POST /api/warehouse/purchase-orders/{id}/mark-purchased (concepto → pedida, admins).
     # Tag 20261127-skirm698-3565e25 (manifiesto linux/amd64 único).
-    digest: sha256:8c23976ffa3bd5ded028ad98ea3c2f98f1af4aaa90a132b0fa90a84f5495558b
+    # + skirmshop-picqer@873f0ab (SKIRM-713, PR #48): POST /api/warehouse/purchase-orders — una PO concept de ES
+    # al proveedor con una línea por SKU (sin crear productos), para el plugin bajo-pedido.
+    # Tag 20261127-skirm713-873f0ab (manifiesto linux/amd64 único).
+    digest: sha256:210c099d0917d891b9ee956283095e60cec3a9fdaff7d18f771a4c4e230cf5d4
 
 patches:
   - target: { kind: Deployment, name: app }
