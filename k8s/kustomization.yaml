@@ -96,7 +96,10 @@ images:
     # ubicaciones en vivo) y POST /api/warehouse/purchase-orders/{id}/receive (recepción v2 de Picqer en la
     # caja de cada producto, solo admins; el POST no se reintenta tras un 5xx).
     # Tag 20261127-skirm698-1d1eb04 (manifiesto linux/amd64 único, sin atestación).
-    digest: sha256:07fdc0faaf9ea8e4961e0431d2f117f387e77d2c87753715fdec5a3a80fa565e
+    # + skirmshop-picqer@3565e25 (SKIRM-698, PR #47): la recepción acepta `nota` (comentario de la PO; sin líneas,
+    # solo la nota) y POST /api/warehouse/purchase-orders/{id}/mark-purchased (concepto → pedida, admins).
+    # Tag 20261127-skirm698-3565e25 (manifiesto linux/amd64 único).
+    digest: sha256:8c23976ffa3bd5ded028ad98ea3c2f98f1af4aaa90a132b0fa90a84f5495558b
 
 patches:
   - target: { kind: Deployment, name: app }
