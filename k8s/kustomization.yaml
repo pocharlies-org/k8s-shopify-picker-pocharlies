@@ -106,8 +106,10 @@ images:
     # también las POs `received` (antes solo concept + purchased); cancelled sigue fuera.
     # (Esta imagen trae además skirmshop-picqer@6449be4 (SC-6904, PR #49): reintentos con backoff de las
     # respuestas THROTTLED de Shopify GraphQL, que no llegó a ir en un pin propio.)
-    # Tag 20261128-skirm727-d1e5588 (manifiesto linux/amd64 único).
-    digest: sha256:c347b157147fefdf6cf5865b026c1c8baf8b6a9502795af070c1c7e4507d73f0
+    # + skirmshop-picqer@2b79054 (SKIRM-727, PR #51): las `received` del listado se leen solo de los últimos
+    # 180 días (updated_after); sin acotar eran ~1619 POs (~30 s) y el panel cortaba en el timeout (502).
+    # Tag 20261128-skirm727b-2b79054 (manifiesto linux/amd64 único).
+    digest: sha256:7ad0ae38ec77258713f5b7f4407206b85b7cdb401d7ca1b227a752edb4d8906b
 
 patches:
   - target: { kind: Deployment, name: app }
