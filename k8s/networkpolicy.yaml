@@ -9,6 +9,8 @@
 #   - skirmshop-plugins-mcp / -admin (shim del gateway, ns skirmshop): su egress
 #     ya declara 3480 hacia este servicio (k8s-agentgateway-pocharlies).
 #   - CronJobs del propio picker (mismo ns, etiqueta app.kubernetes.io/instance: picker).
+#   - synapse-adapter-bajo-pedido (ns synapse, SKIRM-713): POST /api/warehouse/purchase-orders al pagarse un
+#     pedido de su campaña factory_order (Bearer PURCHASE_API_TOKEN, X-Actor bajo-pedido).
 #   - back-in-stock-app (ns skirmshop, SKIRM-651): pedido a fábrica retenido sin PO.
 # Selectores en matchExpressions a propósito: el transformer `labels` del
 # kustomization (includeSelectors: true) añade app.kubernetes.io/instance: picker
@@ -41,6 +43,13 @@ spec:
             matchExpressions:
               - { key: app.kubernetes.io/name, operator: In, values: [traefik] }
               - { key: app.kubernetes.io/instance, operator: In, values: [traefik-lan-traefik-lan] }
+        # Adapter de bajo pedido de Synapse (SKIRM-713): pide la PO a Airsoftzone de un pedido pagado.
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: [synapse] }
+          podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/name, operator: In, values: [synapse-adapter-bajo-pedido] }
         # BFF del panel de control (mismo namespace)
         - podSelector:
             matchExpressions:
