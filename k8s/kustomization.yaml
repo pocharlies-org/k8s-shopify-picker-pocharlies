@@ -106,10 +106,14 @@ images:
     # también las POs `received` (antes solo concept + purchased); cancelled sigue fuera.
     # (Esta imagen trae además skirmshop-picqer@6449be4 (SC-6904, PR #49): reintentos con backoff de las
     # respuestas THROTTLED de Shopify GraphQL, que no llegó a ir en un pin propio.)
-    # + skirmshop-picqer@2b79054 (SKIRM-727, PR #51): las `received` del listado se leen solo de los últimos
+# + skirmshop-picqer@2b79054 (SKIRM-727, PR #51): las `received` del listado se leen solo de los últimos
     # 180 días (updated_after); sin acotar eran ~1619 POs (~30 s) y el panel cortaba en el timeout (502).
     # Tag 20261128-skirm727b-2b79054 (manifiesto linux/amd64 único).
-    digest: sha256:7ad0ae38ec77258713f5b7f4407206b85b7cdb401d7ca1b227a752edb4d8906b
+    # + skirmshop-picqer@947e6dc (SKIRM-728, PR #52): la «N » delante de una caja es la misma caja en el
+    # almacén nuevo (Via Llobregat 27) y viaja con la estantería («N G3, 24» → estantería «N G»); sin N es
+    # el almacén viejo. El mapa, las estanterías y los movimientos toleran la N.
+    # Tag 20261128-skirm728-947e6dc (manifiesto linux/amd64 único).
+    digest: sha256:d7902ca602d714ed3eb913f0a2f1aebf1d9b0b923e85009a30e06e273c8b9a2a
 
 patches:
   - target: { kind: Deployment, name: app }
