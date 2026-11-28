@@ -102,7 +102,12 @@ images:
     # + skirmshop-picqer@873f0ab (SKIRM-713, PR #48): POST /api/warehouse/purchase-orders — una PO concept de ES
     # al proveedor con una línea por SKU (sin crear productos), para el plugin bajo-pedido.
     # Tag 20261127-skirm713-873f0ab (manifiesto linux/amd64 único).
-    digest: sha256:210c099d0917d891b9ee956283095e60cec3a9fdaff7d18f771a4c4e230cf5d4
+    # + skirmshop-picqer@d1e5588 (SKIRM-727, PR #50): el listado GET /api/warehouse/purchase-orders incluye
+    # también las POs `received` (antes solo concept + purchased); cancelled sigue fuera.
+    # (Esta imagen trae además skirmshop-picqer@6449be4 (SC-6904, PR #49): reintentos con backoff de las
+    # respuestas THROTTLED de Shopify GraphQL, que no llegó a ir en un pin propio.)
+    # Tag 20261128-skirm727-d1e5588 (manifiesto linux/amd64 único).
+    digest: sha256:c347b157147fefdf6cf5865b026c1c8baf8b6a9502795af070c1c7e4507d73f0
 
 patches:
   - target: { kind: Deployment, name: app }
